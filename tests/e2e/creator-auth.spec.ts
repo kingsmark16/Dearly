@@ -93,9 +93,9 @@ test('Creator must verify email before using the protected area', async ({
   await expect(page.getByLabel('Favorite memory')).toHaveValue(
     'The first conversation we never wanted to end.',
   )
-  await page.getByRole('link', { name: '← Back to Drafts' }).click()
+  await page.getByRole('link', { name: '← Back to Letters' }).click()
   await expect(
-    page.getByRole('list', { name: 'Your saved drafts' }),
+    page.getByRole('list', { name: 'Your saved letters' }),
   ).toContainText('The day we met')
 
   await page.getByRole('button', { name: 'Sign out' }).click()

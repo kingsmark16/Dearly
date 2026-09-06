@@ -1,6 +1,21 @@
 import { MediaAssetValidationError } from './media-asset.js'
 import type { CatalogTemplate } from '../../../catalog/domain/template.js'
 
+export function contentReferencesMediaAsset(
+  content: Record<string, unknown>,
+  assetId: string,
+) {
+  return Object.values(content).some((value) => {
+    if (value === assetId) {
+      return true
+    }
+
+    return (
+      Array.isArray(value) && value.some((candidate) => candidate === assetId)
+    )
+  })
+}
+
 function getMediaField(
   template: CatalogTemplate,
   fieldId: string,

@@ -16,6 +16,9 @@ type PublishProblem = {
 type PublishLetterPanelProps = {
   letterId: string
   beforePublish: () => Promise<void>
+  status: 'draft' | 'published'
+  hasPendingRevision: boolean
+  shareUrl: string | null
 }
 
 function getPublishProblems(error: unknown): PublishProblem[] {
@@ -177,10 +180,18 @@ function ShareLinkTools({ result }: { result: PublishLetterResponse }) {
 export function PublishLetterPanel({
   letterId,
   beforePublish,
+  status,
+  hasPendingRevision,
+  shareUrl,
 }: PublishLetterPanelProps) {
   const publishMutation = usePublishCreatorLetter()
   const [result, setResult] = useState<PublishLetterResponse | null>(null)
   const [error, setError] = useState<unknown>(null)
+
+  const displayResult: PublishLetterResponse | null =
+    result ??
+    (shareUrl ? { id: letterId, status: 'published', shareUrl } : null)
+  const canPublishRevision = status === 'published' && hasPendingRevision
 
   async function handlePublish() {
     setError(null)
@@ -202,8 +213,8 @@ export function PublishLetterPanel({
       className="space-y-6 rounded-2xl border border-[var(--dearly-blush)] bg-[var(--dearly-blush)]/20 p-6"
       data-testid="publish-letter-panel"
     >
-      {result ? (
-        <ShareLinkTools result={result} />
+      {displayResult ? (
+        <ShareLinkTools result={displayResult} />
       ) : (
         <>
           <div>
@@ -246,6 +257,47 @@ export function PublishLetterPanel({
           </Button>
         </>
       )}
+
+      {canPublishRevision ? (
+        <div className="space-y-5">
+          <div>
+            <h2 className="text-2xl">Publish your Pending revision</h2>
+            <p className="mt-2 leading-7 text-[var(--dearly-muted)]">
+              Your Share link and QR code will stay the same. Viewers will see
+              the updated content after you publish it.
+            </p>
+          </div>
+
+          {error ? (
+            <div
+              className="space-y-3 rounded-xl bg-red-50 p-4 text-sm leading-6 text-red-800"
+              role="alert"
+            >
+              <p>{getPublishErrorMessage(error)}</p>
+              {problems.length > 0 ? (
+                <ul className="list-disc space-y-1 pl-5">
+                  {problems.map((problem) => (
+                    <li key={`${problem.fieldId}-${problem.message}`}>
+                      <span className="font-semibold">
+                        {problem.fieldLabel}:
+                      </span>{' '}
+                      {problem.message}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          ) : null}
+
+          <Button
+            disabled={publishMutation.isPending}
+            onClick={() => void handlePublish()}
+            type="button"
+          >
+            {publishMutation.isPending ? 'Publishing…' : 'Publish updates'}
+          </Button>
+        </div>
+      ) : null}
     </section>
   )
 }

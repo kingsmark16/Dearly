@@ -1,9 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common'
 import {
-  LETTER_REPOSITORY,
-  type LetterDraftReader,
+  CREATOR_LETTER_READER,
+  type LetterOwnerReader,
 } from '../../application/ports/letter-repository.js'
-import { LetterDraftNotFoundError } from '../../domain/letter.js'
+import {
+  getEditableLetterContent,
+  LetterDraftNotFoundError,
+} from '../../domain/letter.js'
 import { MediaAssetValidationError } from '../domain/media-asset.js'
 import { reorderMediaAssets } from '../domain/media-content.js'
 import {
@@ -21,23 +24,23 @@ export type ReorderMediaGalleryCommand = {
 @Injectable()
 export class ReorderMediaGalleryUseCase {
   constructor(
-    @Inject(LETTER_REPOSITORY)
-    private readonly letterRepository: LetterDraftReader,
+    @Inject(CREATOR_LETTER_READER)
+    private readonly letterRepository: LetterOwnerReader,
     @Inject(MEDIA_ASSET_REPOSITORY)
     private readonly mediaAssetRepository: MediaAssetRepository,
   ) {}
 
   async execute(command: ReorderMediaGalleryCommand) {
-    const draft = await this.letterRepository.findDraftById(
+    const letter = await this.letterRepository.findByIdForCreator(
       command.creatorId,
       command.letterId,
     )
 
-    if (!draft) {
+    if (!letter) {
       throw new LetterDraftNotFoundError(command.letterId)
     }
 
-    const field = draft.template.definition.fields.find(
+    const field = letter.template.definition.fields.find(
       (candidate) => candidate.id === command.fieldId,
     )
 
@@ -51,7 +54,7 @@ export class ReorderMediaGalleryUseCase {
       throw new MediaAssetValidationError('Gallery order contains duplicates')
     }
 
-    const currentValue = draft.content[command.fieldId]
+    const currentValue = getEditableLetterContent(letter)[command.fieldId]
     const currentIds = Array.isArray(currentValue)
       ? currentValue.filter(
           (value: unknown): value is string => typeof value === 'string',
@@ -93,8 +96,8 @@ export class ReorderMediaGalleryUseCase {
     }
 
     const content = reorderMediaAssets(
-      draft.template,
-      draft.content,
+      letter.template,
+      getEditableLetterContent(letter),
       command.fieldId,
       command.assetIds,
     )

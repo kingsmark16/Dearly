@@ -18,10 +18,13 @@ export type LetterPublishedRecord = {
   status: 'published'
   template: CatalogTemplate
   content: Record<string, unknown>
+  pendingContent: Record<string, unknown> | null
   shareToken: string
   createdAt: Date
   updatedAt: Date
 }
+
+export type CreatorLetterRecord = LetterDraftRecord | LetterPublishedRecord
 
 export type CreateLetterDraftRecord = {
   creatorId: string
@@ -29,11 +32,28 @@ export type CreateLetterDraftRecord = {
   template: CatalogTemplate
 }
 
-export type UpdateLetterDraftRecord = {
+export type UpdateLetterRecord = {
   creatorId: string
   letterId: string
   title: string
   content: Record<string, unknown>
+}
+
+export type UpdateLetterDraftRecord = UpdateLetterRecord
+
+export function getEditableLetterContent(letter: CreatorLetterRecord) {
+  if (letter.status === 'published') {
+    return letter.pendingContent ?? letter.content
+  }
+
+  return letter.content
+}
+
+export class LetterNotFoundError extends Error {
+  constructor(letterId: string) {
+    super(`Letter not found: ${letterId}`)
+    this.name = 'LetterNotFoundError'
+  }
 }
 
 export class LetterDraftNotFoundError extends Error {

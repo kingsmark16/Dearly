@@ -1,14 +1,20 @@
 import { Inject, Injectable } from '@nestjs/common'
 import {
-  LETTER_REPOSITORY,
-  type LetterDraftReader,
+  CREATOR_LETTER_READER,
+  type LetterOwnerReader,
 } from '../../application/ports/letter-repository.js'
-import { LetterDraftNotFoundError } from '../../domain/letter.js'
+import {
+  getEditableLetterContent,
+  LetterDraftNotFoundError,
+} from '../../domain/letter.js'
 import {
   MediaAssetNotFoundError,
   type MediaAssetRecord,
 } from '../domain/media-asset.js'
-import { detachMediaAsset } from '../domain/media-content.js'
+import {
+  contentReferencesMediaAsset,
+  detachMediaAsset,
+} from '../domain/media-content.js'
 import {
   MEDIA_ASSET_REPOSITORY,
   type MediaAssetRepository,
@@ -24,8 +30,8 @@ export type DeleteMediaAssetCommand = {
 @Injectable()
 export class DeleteMediaAssetUseCase {
   constructor(
-    @Inject(LETTER_REPOSITORY)
-    private readonly letterRepository: LetterDraftReader,
+    @Inject(CREATOR_LETTER_READER)
+    private readonly letterRepository: LetterOwnerReader,
     @Inject(MEDIA_ASSET_REPOSITORY)
     private readonly mediaAssetRepository: MediaAssetRepository,
     @Inject(OBJECT_STORAGE)
@@ -33,12 +39,12 @@ export class DeleteMediaAssetUseCase {
   ) {}
 
   async execute(command: DeleteMediaAssetCommand): Promise<MediaAssetRecord> {
-    const draft = await this.letterRepository.findDraftById(
+    const letter = await this.letterRepository.findByIdForCreator(
       command.creatorId,
       command.letterId,
     )
 
-    if (!draft) {
+    if (!letter) {
       throw new LetterDraftNotFoundError(command.letterId)
     }
 
@@ -53,8 +59,8 @@ export class DeleteMediaAssetUseCase {
     }
 
     const content = detachMediaAsset(
-      draft.template,
-      draft.content,
+      letter.template,
+      getEditableLetterContent(letter),
       asset.fieldId,
       asset.id,
     )
@@ -69,7 +75,14 @@ export class DeleteMediaAssetUseCase {
       throw new MediaAssetNotFoundError(command.assetId)
     }
 
-    await this.objectStorage.deleteObject(asset.objectKey)
+    const remainsInPublishedContent =
+      letter.status === 'published' &&
+      contentReferencesMediaAsset(letter.content, asset.id)
+
+    if (!remainsInPublishedContent) {
+      await this.objectStorage.deleteObject(asset.objectKey)
+    }
+
     return deletedAsset
   }
 }

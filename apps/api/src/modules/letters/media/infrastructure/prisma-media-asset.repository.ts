@@ -10,6 +10,7 @@ import type {
   CreatePendingMediaAsset,
   MediaAssetRecord,
 } from '../domain/media-asset.js'
+import { contentReferencesMediaAsset } from '../domain/media-content.js'
 import type { MediaAssetRepository } from '../application/ports/media-asset-repository.js'
 
 function toMediaAssetRecord(asset: {
@@ -70,16 +71,43 @@ export class PrismaMediaAssetRepository implements MediaAssetRepository {
     fieldId: string,
     now: Date,
   ): Promise<number> {
+    const letter = await this.prisma.letter.findFirst({
+      where: {
+        id: letterId,
+        status: { in: [LetterStatus.DRAFT, LetterStatus.PUBLISHED] },
+      },
+      select: { content: true },
+    })
+
+    if (!letter) {
+      return 0
+    }
+
+    const fieldValue =
+      typeof letter.content === 'object' &&
+      letter.content !== null &&
+      !Array.isArray(letter.content)
+        ? (letter.content as Record<string, unknown>)[fieldId]
+        : undefined
+    const referencedAssetIds =
+      typeof fieldValue === 'string'
+        ? [fieldValue]
+        : Array.isArray(fieldValue)
+          ? fieldValue.filter(
+              (assetId): assetId is string => typeof assetId === 'string',
+            )
+          : []
+
     return this.prisma.mediaAsset.count({
       where: {
         letterId,
         fieldId,
         OR: [
-          { status: MediaAssetStatus.READY },
           {
-            status: MediaAssetStatus.PENDING,
-            uploadExpiresAt: { gt: now },
+            id: { in: referencedAssetIds },
+            status: MediaAssetStatus.READY,
           },
+          { status: MediaAssetStatus.PENDING, uploadExpiresAt: { gt: now } },
         ],
       },
     })
@@ -159,7 +187,7 @@ export class PrismaMediaAssetRepository implements MediaAssetRepository {
         where: {
           id: input.letterId,
           creatorId: input.creatorId,
-          status: LetterStatus.DRAFT,
+          status: { in: [LetterStatus.DRAFT, LetterStatus.PUBLISHED] },
         },
       })
 
@@ -204,7 +232,7 @@ export class PrismaMediaAssetRepository implements MediaAssetRepository {
         where: {
           id: input.letterId,
           creatorId: input.creatorId,
-          status: LetterStatus.DRAFT,
+          status: { in: [LetterStatus.DRAFT, LetterStatus.PUBLISHED] },
         },
       })
       const asset = await transaction.mediaAsset.findFirst({
@@ -215,7 +243,16 @@ export class PrismaMediaAssetRepository implements MediaAssetRepository {
         return undefined
       }
 
-      await transaction.mediaAsset.delete({ where: { id: asset.id } })
+      const remainsInPublishedContent =
+        letter.status === LetterStatus.PUBLISHED &&
+        contentReferencesMediaAsset(
+          letter.content as Record<string, unknown>,
+          asset.id,
+        )
+
+      if (!remainsInPublishedContent) {
+        await transaction.mediaAsset.delete({ where: { id: asset.id } })
+      }
       await transaction.letter.update({
         where: { id: input.letterId },
         data: { content: input.content as Prisma.InputJsonObject },
@@ -237,7 +274,7 @@ export class PrismaMediaAssetRepository implements MediaAssetRepository {
         where: {
           id: input.letterId,
           creatorId: input.creatorId,
-          status: LetterStatus.DRAFT,
+          status: { in: [LetterStatus.DRAFT, LetterStatus.PUBLISHED] },
         },
       })
 

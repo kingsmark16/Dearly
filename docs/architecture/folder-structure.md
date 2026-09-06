@@ -81,9 +81,11 @@ apps/api/src/
         letter.ts
       application/
         create-letter-draft.use-case.ts
-        get-creator-letter-draft.use-case.ts
+        get-creator-letter.use-case.ts
         list-creator-letters.use-case.ts
-        update-letter-draft.use-case.ts
+        publish-letter.use-case.ts
+        share-url.ts
+        update-letter.use-case.ts
         ports/
           letter-repository.ts
       presentation/
@@ -134,6 +136,13 @@ modules/letters/
     infrastructure/       Prisma media repository and R2/local storage
   public/                  public Viewer read model and controller
 ```
+
+Published Letter revisions use two content snapshots: `content` is the
+Creator's current editable version, while nullable `publishedContent` is the
+last version exposed through the Share link. Autosave updates only `content`;
+the publish use case copies it into `publishedContent` without changing the
+Letter's owner, Template snapshot, or Share token. The public reader only
+consumes the published snapshot.
 
 The editor, publish, archive, and trash behaviors should add files to these
 existing seams as they are implemented. Media is nested under `letters`
@@ -422,9 +431,9 @@ In practice:
 
 ## Implementation order
 
-The catalog, Creator Draft slice, text/media editor, Creator Draft preview, and
-publish/share flow are implemented. The next slices should extend the existing
-seams in this order:
+The catalog, Creator Draft slice, text/media editor, Creator Draft preview,
+publish/share flow, and Published Letter revision flow are implemented. The
+next slices should extend the existing seams in this order:
 
 1. Add archive/trash lifecycle actions and retention cleanup.
 

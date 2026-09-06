@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config'
 import { InMemoryCatalogRepository } from '../../../catalog/infrastructure/in-memory-catalog.repository.js'
 import type { LetterDraftRecord } from '../../domain/letter.js'
 import { CreateMediaUploadIntentUseCase } from './create-media-upload-intent.use-case.js'
-import type { LetterDraftReader } from '../../application/ports/letter-repository.js'
+import type { LetterOwnerReader } from '../../application/ports/letter-repository.js'
 import type { MediaAssetIntentRepository } from './ports/media-asset-repository.js'
 import type { PendingMediaAsset } from '../domain/media-asset.js'
 import type { UploadIntentStorage } from './ports/object-storage.js'
@@ -41,8 +41,8 @@ describe('CreateMediaUploadIntentUseCase', () => {
     const expiresAt = new Date('2026-09-06T00:16:00.000Z')
     let pendingAsset: PendingMediaAsset | undefined
 
-    const letterRepository: LetterDraftReader = {
-      findDraftById: vi.fn().mockResolvedValue(draft),
+    const letterRepository: LetterOwnerReader = {
+      findByIdForCreator: vi.fn().mockResolvedValue(draft),
     }
     const mediaAssetRepository: MediaAssetIntentRepository = {
       countActiveByField: vi.fn().mockResolvedValue(1),
@@ -113,7 +113,7 @@ describe('CreateMediaUploadIntentUseCase', () => {
       expiresAt: new Date('2026-09-06T00:31:00.000Z'),
     })
     const useCase = new CreateMediaUploadIntentUseCase(
-      { findDraftById: vi.fn().mockResolvedValue(draft) },
+      { findByIdForCreator: vi.fn().mockResolvedValue(draft) },
       {
         countActiveByField: vi.fn().mockResolvedValue(0),
         createPending: vi.fn().mockResolvedValue({
@@ -155,7 +155,7 @@ describe('CreateMediaUploadIntentUseCase', () => {
     const createPending = vi.fn()
     const createUploadIntent = vi.fn()
     const useCase = new CreateMediaUploadIntentUseCase(
-      { findDraftById: vi.fn().mockResolvedValue(draft) },
+      { findByIdForCreator: vi.fn().mockResolvedValue(draft) },
       {
         countActiveByField: vi.fn().mockResolvedValue(0),
         createPending,
@@ -182,7 +182,7 @@ describe('CreateMediaUploadIntentUseCase', () => {
     const draft = createDraft(await getTemplate('little-things'))
     const createPending = vi.fn()
     const useCase = new CreateMediaUploadIntentUseCase(
-      { findDraftById: vi.fn().mockResolvedValue(draft) },
+      { findByIdForCreator: vi.fn().mockResolvedValue(draft) },
       {
         countActiveByField: vi.fn().mockResolvedValue(0),
         createPending,
@@ -208,7 +208,7 @@ describe('CreateMediaUploadIntentUseCase', () => {
     const draft = createDraft(await getTemplate('little-things'))
     const createPending = vi.fn()
     const useCase = new CreateMediaUploadIntentUseCase(
-      { findDraftById: vi.fn().mockResolvedValue(draft) },
+      { findByIdForCreator: vi.fn().mockResolvedValue(draft) },
       {
         countActiveByField: vi.fn().mockResolvedValue(12),
         createPending,
@@ -234,7 +234,7 @@ describe('CreateMediaUploadIntentUseCase', () => {
     const draft = createDraft(await getTemplate('another-year-brighter'))
     const createPending = vi.fn()
     const useCase = new CreateMediaUploadIntentUseCase(
-      { findDraftById: vi.fn().mockResolvedValue(draft) },
+      { findByIdForCreator: vi.fn().mockResolvedValue(draft) },
       {
         countActiveByField: vi.fn().mockResolvedValue(0),
         createPending,
@@ -261,7 +261,7 @@ describe('CreateMediaUploadIntentUseCase', () => {
     const createPending = vi.fn()
     const createUploadIntent = vi.fn()
     const useCase = new CreateMediaUploadIntentUseCase(
-      { findDraftById: vi.fn().mockResolvedValue(undefined) },
+      { findByIdForCreator: vi.fn().mockResolvedValue(undefined) },
       {
         countActiveByField: vi.fn(),
         createPending,

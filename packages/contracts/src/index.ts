@@ -22,8 +22,10 @@ export {
 } from './letters/update-draft'
 export {
   CreatorLetterDraftSchema,
+  CreatorLetterSchema,
   CreatorLetterListSchema,
   CreatorLetterSummarySchema,
+  type CreatorLetter,
   type CreatorLetterDraft,
   type CreatorLetterSummary,
 } from './letters/creator-letter'

@@ -1,11 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common'
 import {
-  LETTER_REPOSITORY,
-  type LetterDraftReader,
+  CREATOR_LETTER_READER,
+  type LetterOwnerReader,
 } from '../../application/ports/letter-repository.js'
 import {
+  getEditableLetterContent,
   LetterDraftNotFoundError,
-  type LetterDraftRecord,
+  type CreatorLetterRecord,
 } from '../../domain/letter.js'
 import type { MediaAssetRecord } from '../domain/media-asset.js'
 import {
@@ -20,16 +21,17 @@ export type CreatorMediaAssetView = MediaAssetRecord & {
   previewUrl: string | null
 }
 
-function orderAssetsByDraftContent(
-  draft: LetterDraftRecord,
+function orderAssetsByLetterContent(
+  letter: CreatorLetterRecord,
   assets: MediaAssetRecord[],
 ) {
   const assetById = new Map(assets.map((asset) => [asset.id, asset]))
   const orderedAssets: MediaAssetRecord[] = []
   const addedAssetIds = new Set<string>()
+  const content = getEditableLetterContent(letter)
 
-  for (const field of draft.template.definition.fields) {
-    const value = draft.content[field.id]
+  for (const field of letter.template.definition.fields) {
+    const value = content[field.id]
     const assetIds =
       typeof value === 'string'
         ? [value]
@@ -49,17 +51,14 @@ function orderAssetsByDraftContent(
     }
   }
 
-  return [
-    ...orderedAssets,
-    ...assets.filter((asset) => !addedAssetIds.has(asset.id)),
-  ]
+  return orderedAssets
 }
 
 @Injectable()
 export class GetCreatorLetterMediaUseCase {
   constructor(
-    @Inject(LETTER_REPOSITORY)
-    private readonly letterRepository: LetterDraftReader,
+    @Inject(CREATOR_LETTER_READER)
+    private readonly letterRepository: LetterOwnerReader,
     @Inject(MEDIA_ASSET_REPOSITORY)
     private readonly mediaAssetRepository: MediaAssetRepository,
     @Inject(OBJECT_STORAGE)
@@ -70,9 +69,12 @@ export class GetCreatorLetterMediaUseCase {
     creatorId: string,
     letterId: string,
   ): Promise<CreatorMediaAssetView[]> {
-    const draft = await this.letterRepository.findDraftById(creatorId, letterId)
+    const letter = await this.letterRepository.findByIdForCreator(
+      creatorId,
+      letterId,
+    )
 
-    if (!draft) {
+    if (!letter) {
       throw new LetterDraftNotFoundError(letterId)
     }
 
@@ -82,7 +84,7 @@ export class GetCreatorLetterMediaUseCase {
     )
 
     return Promise.all(
-      orderAssetsByDraftContent(draft, assets).map(async (asset) => {
+      orderAssetsByLetterContent(letter, assets).map(async (asset) => {
         if (asset.status === 'pending') {
           return { ...asset, previewUrl: null }
         }

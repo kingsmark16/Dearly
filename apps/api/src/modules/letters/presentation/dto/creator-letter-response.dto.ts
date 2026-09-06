@@ -1,27 +1,36 @@
 import type { TemplateSummary } from '@dearly/contracts/catalog/template'
-import type { LetterDraftRecord } from '../../domain/letter.js'
+import {
+  getEditableLetterContent,
+  type CreatorLetterRecord,
+} from '../../domain/letter.js'
 
 export type CreatorLetterSummaryResponse = {
   id: string
   title: string
-  status: 'draft'
+  status: CreatorLetterRecord['status']
   template: TemplateSummary
+  hasPendingRevision: boolean
+  shareUrl: string | null
   createdAt: string
   updatedAt: string
 }
 
-export type CreatorLetterDraftResponse = {
+export type CreatorLetterResponse = {
   id: string
   title: string
-  status: 'draft'
-  template: LetterDraftRecord['template']
+  status: CreatorLetterRecord['status']
+  template: CreatorLetterRecord['template']
   content: Record<string, unknown>
+  hasPendingRevision: boolean
+  shareUrl: string | null
   createdAt: string
   updatedAt: string
 }
 
+export type CreatorLetterDraftResponse = CreatorLetterResponse
+
 function toTemplateSummary(
-  template: LetterDraftRecord['template'],
+  template: CreatorLetterRecord['template'],
 ): TemplateSummary {
   return {
     slug: template.slug,
@@ -34,27 +43,35 @@ function toTemplateSummary(
 }
 
 export function toCreatorLetterSummaryResponse(
-  letter: LetterDraftRecord,
+  letter: CreatorLetterRecord,
+  shareUrl: string | null,
 ): CreatorLetterSummaryResponse {
   return {
     id: letter.id,
     title: letter.title,
     status: letter.status,
     template: toTemplateSummary(letter.template),
+    hasPendingRevision:
+      letter.status === 'published' && letter.pendingContent !== null,
+    shareUrl,
     createdAt: letter.createdAt.toISOString(),
     updatedAt: letter.updatedAt.toISOString(),
   }
 }
 
 export function toCreatorLetterDraftResponse(
-  letter: LetterDraftRecord,
-): CreatorLetterDraftResponse {
+  letter: CreatorLetterRecord,
+  shareUrl: string | null,
+): CreatorLetterResponse {
   return {
     id: letter.id,
     title: letter.title,
     status: letter.status,
     template: letter.template,
-    content: letter.content,
+    content: getEditableLetterContent(letter),
+    hasPendingRevision:
+      letter.status === 'published' && letter.pendingContent !== null,
+    shareUrl,
     createdAt: letter.createdAt.toISOString(),
     updatedAt: letter.updatedAt.toISOString(),
   }

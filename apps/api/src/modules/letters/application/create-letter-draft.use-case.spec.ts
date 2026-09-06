@@ -6,6 +6,7 @@ import {
 } from './create-letter-draft.use-case.js'
 import type {
   CreateLetterDraftRecord,
+  CreatorLetterRecord,
   LetterDraftRecord,
 } from '../domain/letter.js'
 import type { LetterRepository } from './ports/letter-repository.js'
@@ -32,6 +33,10 @@ class RecordingLetterRepository implements LetterRepository {
 
   async listByCreator(): Promise<LetterDraftRecord[]> {
     return []
+  }
+
+  async findByIdForCreator(): Promise<CreatorLetterRecord | undefined> {
+    return undefined
   }
 
   async findDraftById(): Promise<LetterDraftRecord | undefined> {

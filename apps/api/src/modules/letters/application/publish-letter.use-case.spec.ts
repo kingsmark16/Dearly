@@ -5,6 +5,7 @@ import type { MediaAssetRecord } from '../media/domain/media-asset.js'
 import type { MediaAssetReader } from '../media/application/ports/media-asset-repository.js'
 import {
   LetterPublishValidationError,
+  type CreatorLetterRecord,
   type LetterPublishedRecord,
   type LetterDraftRecord,
 } from '../domain/letter.js'
@@ -45,6 +46,7 @@ function createPublishedRecord(
   return {
     ...draft,
     status: 'published',
+    pendingContent: null,
     shareToken,
   }
 }
@@ -59,8 +61,17 @@ class FakeLetterPublishingRepository implements LetterPublishingRepository {
 
       return createPublishedRecord(this.draft, shareToken)
     })
+  readonly publishRevision = vi
+    .fn<LetterPublishingRepository['publishRevision']>()
+    .mockImplementation(async () =>
+      this.letter?.status === 'published' ? this.letter : undefined,
+    )
 
-  constructor(readonly draft: LetterDraftRecord | undefined) {}
+  constructor(readonly letter: CreatorLetterRecord | undefined) {}
+
+  get draft() {
+    return this.letter?.status === 'draft' ? this.letter : undefined
+  }
 
   async findDraftById(
     creatorId: string,
@@ -68,6 +79,15 @@ class FakeLetterPublishingRepository implements LetterPublishingRepository {
   ): Promise<LetterDraftRecord | undefined> {
     return this.draft?.creatorId === creatorId && this.draft.id === letterId
       ? this.draft
+      : undefined
+  }
+
+  async findByIdForCreator(
+    creatorId: string,
+    letterId: string,
+  ): Promise<CreatorLetterRecord | undefined> {
+    return this.letter?.creatorId === creatorId && this.letter.id === letterId
+      ? this.letter
       : undefined
   }
 }
@@ -160,6 +180,44 @@ describe('PublishLetterUseCase', () => {
       return true
     })
     expect(repository.publishDraft).not.toHaveBeenCalled()
+  })
+
+  it('publishes a Pending revision without changing the existing Share link', async () => {
+    const template = await getTemplate('our-story')
+    const letter: LetterPublishedRecord = {
+      id: 'letter-1',
+      creatorId: 'creator-1',
+      title: 'The day we met',
+      status: 'published',
+      template,
+      content: {
+        recipientName: 'Alex',
+        favoriteMemory: 'The old published memory.',
+      },
+      pendingContent: {
+        recipientName: 'Alex',
+        favoriteMemory: 'The new pending memory.',
+      },
+      shareToken: 'stable-share-token',
+      createdAt: new Date('2026-09-06T00:00:00.000Z'),
+      updatedAt: new Date('2026-09-06T00:01:00.000Z'),
+    }
+    const repository = new FakeLetterPublishingRepository(letter)
+    const useCase = createUseCase(repository)
+
+    const result = await useCase.execute({
+      creatorId: 'creator-1',
+      letterId: 'letter-1',
+    })
+
+    expect(repository.publishDraft).not.toHaveBeenCalled()
+    expect(repository.publishRevision).toHaveBeenCalledWith({
+      creatorId: 'creator-1',
+      letterId: 'letter-1',
+    })
+    expect(result.shareUrl).toBe(
+      'https://dearly.example/letters/stable-share-token',
+    )
   })
 
   it('rejects a gallery that violates its configured minimum and explains it', async () => {

@@ -2,15 +2,17 @@ import { Module } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { CatalogModule } from '../catalog/catalog.module.js'
 import { CreateLetterDraftUseCase } from './application/create-letter-draft.use-case.js'
-import { GetCreatorLetterDraftUseCase } from './application/get-creator-letter-draft.use-case.js'
+import { GetCreatorLetterUseCase } from './application/get-creator-letter.use-case.js'
 import { ListCreatorLettersUseCase } from './application/list-creator-letters.use-case.js'
 import { PublishLetterUseCase } from './application/publish-letter.use-case.js'
 import {
+  CREATOR_LETTER_READER,
+  LETTER_EDITOR_REPOSITORY,
   LETTER_PUBLISHING_REPOSITORY,
   LETTER_REPOSITORY,
   PUBLISHED_LETTER_READER,
 } from './application/ports/letter-repository.js'
-import { UpdateLetterDraftUseCase } from './application/update-letter-draft.use-case.js'
+import { UpdateLetterUseCase } from './application/update-letter.use-case.js'
 import { PrismaLetterRepository } from './infrastructure/prisma-letter.repository.js'
 import { LettersController } from './presentation/letters.controller.js'
 import { PublicLettersController } from './public/public-letters.controller.js'
@@ -48,6 +50,14 @@ import { LocalMediaStorageController } from './media/presentation/local-media-st
       useExisting: PrismaLetterRepository,
     },
     {
+      provide: CREATOR_LETTER_READER,
+      useExisting: PrismaLetterRepository,
+    },
+    {
+      provide: LETTER_EDITOR_REPOSITORY,
+      useExisting: PrismaLetterRepository,
+    },
+    {
       provide: LETTER_PUBLISHING_REPOSITORY,
       useExisting: PrismaLetterRepository,
     },
@@ -56,9 +66,9 @@ import { LocalMediaStorageController } from './media/presentation/local-media-st
       useExisting: PrismaLetterRepository,
     },
     CreateLetterDraftUseCase,
-    GetCreatorLetterDraftUseCase,
+    GetCreatorLetterUseCase,
     ListCreatorLettersUseCase,
-    UpdateLetterDraftUseCase,
+    UpdateLetterUseCase,
     PublishLetterUseCase,
     {
       provide: MEDIA_ASSET_REPOSITORY,
