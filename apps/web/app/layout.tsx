@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { QueryProvider } from '../src/components/query-provider'
+import { QueryProvider } from '../src/providers/query-provider'
 import './globals.css'
 
 export const metadata: Metadata = {

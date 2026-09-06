@@ -4,8 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "exports": {
-    "./button": "./src/button.tsx",
-    "./utils": "./src/utils.ts"
+    ".": "./src/index.ts",
+    "./button": "./src/components/ui/button.tsx",
+    "./utils": "./src/lib/utils.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",

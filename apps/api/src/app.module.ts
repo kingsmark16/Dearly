@@ -1,20 +1,19 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { AuthModule } from '@thallesp/nestjs-better-auth'
-import { createAuth } from './auth.js'
+import { createAuth } from './infrastructure/auth/auth.js'
 import {
   environmentValidationSchema,
   validateEnvironment,
-} from './configuration.js'
-import { CreatorModule } from './creator/creator.module.js'
-import { DatabaseModule } from './database.module.js'
-import { EmailDeliveryService } from './email-delivery.service.js'
-import { EmailModule } from './email.module.js'
-import { HealthController } from './health.controller.js'
-import { PublicLettersController } from './public-letters.controller.js'
-import { PublicLettersService } from './public-letters.service.js'
-import { PrismaService } from './prisma.service.js'
-import { TestMailModule } from './test-mail.module.js'
+} from './config/configuration.js'
+import { DatabaseModule } from './infrastructure/database/database.module.js'
+import { EmailDeliveryService } from './infrastructure/email/email-delivery.service.js'
+import { EmailModule } from './infrastructure/email/email.module.js'
+import { CreatorModule } from './modules/creator/creator.module.js'
+import { LettersModule } from './modules/letters/letters.module.js'
+import { TestMailModule } from './modules/test-mail/test-mail.module.js'
+import { HealthController } from './platform/health/health.controller.js'
+import { PrismaService } from './infrastructure/database/prisma.service.js'
 
 @Module({
   imports: [
@@ -27,6 +26,7 @@ import { TestMailModule } from './test-mail.module.js'
     DatabaseModule,
     EmailModule,
     CreatorModule,
+    LettersModule,
     AuthModule.forRootAsync({
       imports: [DatabaseModule, EmailModule],
       inject: [PrismaService, ConfigService, EmailDeliveryService],
@@ -40,7 +40,6 @@ import { TestMailModule } from './test-mail.module.js'
     }),
     TestMailModule,
   ],
-  controllers: [HealthController, PublicLettersController],
-  providers: [PublicLettersService],
+  controllers: [HealthController],
 })
 export class AppModule {}

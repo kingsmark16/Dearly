@@ -138,4 +138,6 @@ view-model, never creator-only fields or storage credentials.
 
 See [`CONTEXT.md`](CONTEXT.md) for the product/domain language and
 [`docs/research/dearly-stack-architecture.md`](docs/research/dearly-stack-architecture.md)
-for the first-party documentation research behind the stack choices.
+for the first-party documentation research behind the stack choices. The
+feature-oriented folder rules are in
+[`docs/architecture/folder-structure.md`](docs/architecture/folder-structure.md).
