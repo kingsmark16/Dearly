@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { CatalogModule } from '../catalog/catalog.module.js'
+import { ChangeLetterLifecycleUseCase } from './application/change-letter-lifecycle.use-case.js'
+import { CleanupExpiredLettersUseCase } from './application/cleanup-expired-letters.use-case.js'
 import { CreateLetterDraftUseCase } from './application/create-letter-draft.use-case.js'
 import { GetCreatorLetterUseCase } from './application/get-creator-letter.use-case.js'
 import { ListCreatorLettersUseCase } from './application/list-creator-letters.use-case.js'
@@ -8,6 +10,7 @@ import { PublishLetterUseCase } from './application/publish-letter.use-case.js'
 import {
   CREATOR_LETTER_READER,
   LETTER_EDITOR_REPOSITORY,
+  LETTER_LIFECYCLE_REPOSITORY,
   LETTER_PUBLISHING_REPOSITORY,
   LETTER_REPOSITORY,
   PUBLISHED_LETTER_READER,
@@ -18,6 +21,7 @@ import { LettersController } from './presentation/letters.controller.js'
 import { PublicLettersController } from './public/public-letters.controller.js'
 import { PublicLettersService } from './public/public-letters.service.js'
 import { GetPublicLetterUseCase } from './public/get-public-letter.use-case.js'
+import { LetterRetentionScheduler } from './infrastructure/letter-retention.scheduler.js'
 import { CompleteMediaUploadUseCase } from './media/application/complete-media-upload.use-case.js'
 import { CreateMediaUploadIntentUseCase } from './media/application/create-media-upload-intent.use-case.js'
 import { DeleteMediaAssetUseCase } from './media/application/delete-media-asset.use-case.js'
@@ -58,6 +62,10 @@ import { LocalMediaStorageController } from './media/presentation/local-media-st
       useExisting: PrismaLetterRepository,
     },
     {
+      provide: LETTER_LIFECYCLE_REPOSITORY,
+      useExisting: PrismaLetterRepository,
+    },
+    {
       provide: LETTER_PUBLISHING_REPOSITORY,
       useExisting: PrismaLetterRepository,
     },
@@ -70,6 +78,9 @@ import { LocalMediaStorageController } from './media/presentation/local-media-st
     ListCreatorLettersUseCase,
     UpdateLetterUseCase,
     PublishLetterUseCase,
+    ChangeLetterLifecycleUseCase,
+    CleanupExpiredLettersUseCase,
+    LetterRetentionScheduler,
     {
       provide: MEDIA_ASSET_REPOSITORY,
       useClass: PrismaMediaAssetRepository,

@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import axios from 'axios'
 import { useCatalog } from '../../catalog/hooks/use-catalog'
@@ -11,6 +10,7 @@ import { useCreatorProfile } from '../hooks/use-creator-profile'
 import { CreatorTemplatePicker } from './creator-template-picker'
 import { useCreateLetterDraft } from '../../letters/hooks/use-create-letter-draft'
 import { useCreatorLetters } from '../../letters/hooks/use-creator-letters'
+import { CreatorLetterList } from '../../letters/components/creator-letter-list'
 
 export function CreatorArea() {
   const router = useRouter()
@@ -156,42 +156,9 @@ export function CreatorArea() {
           >
             We could not load your Letters. Please try again.
           </p>
-        ) : lettersQuery.data && lettersQuery.data.length > 0 ? (
-          <ul className="space-y-3" aria-label="Your saved letters">
-            {lettersQuery.data.map((letter) => (
-              <li
-                key={letter.id}
-                className="rounded-2xl border border-[var(--dearly-blush)] bg-white/70 p-4"
-              >
-                <Link
-                  className="block rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--dearly-plum)]"
-                  href={`/creator/letters/${letter.id}`}
-                >
-                  <p className="font-semibold">{letter.title}</p>
-                  <p className="mt-1 text-sm font-semibold text-[var(--dearly-plum)]">
-                    {letter.status === 'published'
-                      ? 'Edit Published Letter'
-                      : 'Edit Draft'}
-                  </p>
-                </Link>
-                <p className="mt-1 text-sm text-[var(--dearly-muted)]">
-                  {letter.template.category.name} · {letter.template.name}
-                </p>
-                <p className="mt-2 text-sm text-[var(--dearly-muted)]">
-                  {letter.status === 'published'
-                    ? letter.hasPendingRevision
-                      ? 'Pending revision not yet public'
-                      : 'Published'
-                    : 'Draft'}
-                </p>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="rounded-2xl border border-dashed border-[var(--dearly-blush)] p-5 text-[var(--dearly-muted)]">
-            You do not have any Letters yet.
-          </p>
-        )}
+        ) : lettersQuery.data ? (
+          <CreatorLetterList letters={lettersQuery.data} />
+        ) : null}
       </section>
 
       <Button disabled={isSigningOut} onClick={handleSignOut} type="button">

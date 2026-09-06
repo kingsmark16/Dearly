@@ -14,15 +14,18 @@ import { ConfigService } from '@nestjs/config'
 import { Session, type UserSession } from '@thallesp/nestjs-better-auth'
 import { CatalogTemplateNotFoundError } from '../../catalog/domain/template.js'
 import { VerifiedCreatorGuard } from '../../creator/guards/verified-creator.guard.js'
+import { ChangeLetterLifecycleUseCase } from '../application/change-letter-lifecycle.use-case.js'
 import { CreateLetterDraftUseCase } from '../application/create-letter-draft.use-case.js'
 import { GetCreatorLetterUseCase } from '../application/get-creator-letter.use-case.js'
 import { ListCreatorLettersUseCase } from '../application/list-creator-letters.use-case.js'
 import { PublishLetterUseCase } from '../application/publish-letter.use-case.js'
 import { UpdateLetterUseCase } from '../application/update-letter.use-case.js'
 import {
-  LetterNotFoundError,
   LetterDraftNotFoundError,
   LetterDraftValidationError,
+  LetterLifecycleTransitionError,
+  LetterLifecycleValidationError,
+  LetterNotFoundError,
   LetterPublishValidationError,
 } from '../domain/letter.js'
 import { CreateLetterDraftDto } from './dto/create-letter-draft.dto.js'
@@ -30,9 +33,13 @@ import {
   toCreatorLetterDraftResponse,
   toCreatorLetterSummaryResponse,
 } from './dto/creator-letter-response.dto.js'
+import { PermanentlyDeleteLetterDto } from './dto/permanently-delete-letter.dto.js'
 import { UpdateLetterDraftDto } from './dto/update-letter-draft.dto.js'
 import { createLetterShareUrl } from '../application/share-url.js'
-import type { CreatorLetterRecord } from '../domain/letter.js'
+import type {
+  CreatorLetterLifecycleRecord,
+  LetterLifecycleAction,
+} from '../domain/letter.js'
 
 @Controller('letters')
 @UseGuards(VerifiedCreatorGuard)
@@ -48,6 +55,8 @@ export class LettersController {
     private readonly publishLetterUseCase: PublishLetterUseCase,
     @Inject(UpdateLetterUseCase)
     private readonly updateLetterUseCase: UpdateLetterUseCase,
+    @Inject(ChangeLetterLifecycleUseCase)
+    private readonly changeLetterLifecycleUseCase: ChangeLetterLifecycleUseCase,
     @Inject(ConfigService)
     private readonly configService: ConfigService,
   ) {}
@@ -150,7 +159,68 @@ export class LettersController {
     }
   }
 
-  private getShareUrl(letter: CreatorLetterRecord) {
+  @Post(':id/archive')
+  archiveLetter(
+    @Session() session: UserSession,
+    @Param('id') letterId: string,
+  ) {
+    return this.changeLifecycle(session, letterId, 'archive')
+  }
+
+  @Post(':id/restore')
+  restoreLetter(
+    @Session() session: UserSession,
+    @Param('id') letterId: string,
+  ) {
+    return this.changeLifecycle(session, letterId, 'restore')
+  }
+
+  @Post(':id/trash')
+  trashLetter(@Session() session: UserSession, @Param('id') letterId: string) {
+    return this.changeLifecycle(session, letterId, 'trash')
+  }
+
+  @Post(':id/permanent-delete')
+  async permanentlyDeleteLetter(
+    @Session() session: UserSession,
+    @Param('id') letterId: string,
+    @Body() input: PermanentlyDeleteLetterDto,
+  ) {
+    try {
+      return await this.changeLetterLifecycleUseCase.execute({
+        creatorId: session.user.id,
+        letterId,
+        action: 'permanent-delete',
+        confirmation: input.confirmation,
+      })
+    } catch (error: unknown) {
+      this.throwLetterError(error)
+    }
+  }
+
+  private async changeLifecycle(
+    session: UserSession,
+    letterId: string,
+    action: LetterLifecycleAction,
+  ) {
+    try {
+      const result = await this.changeLetterLifecycleUseCase.execute({
+        creatorId: session.user.id,
+        letterId,
+        action,
+      })
+
+      if (result.status === 'deleted') {
+        throw new Error('Lifecycle action returned an invalid result')
+      }
+
+      return toCreatorLetterSummaryResponse(result, this.getShareUrl(result))
+    } catch (error: unknown) {
+      this.throwLetterError(error)
+    }
+  }
+
+  private getShareUrl(letter: CreatorLetterLifecycleRecord) {
     return letter.status === 'published'
       ? createLetterShareUrl(
           this.configService.getOrThrow<string>('WEB_ORIGIN'),
@@ -169,6 +239,13 @@ export class LettersController {
     }
 
     if (error instanceof LetterDraftValidationError) {
+      throw new BadRequestException(error.message)
+    }
+
+    if (
+      error instanceof LetterLifecycleTransitionError ||
+      error instanceof LetterLifecycleValidationError
+    ) {
       throw new BadRequestException(error.message)
     }
 

@@ -25,9 +25,11 @@ export {
   CreatorLetterSchema,
   CreatorLetterListSchema,
   CreatorLetterSummarySchema,
+  LetterLifecycleResponseSchema,
   type CreatorLetter,
   type CreatorLetterDraft,
   type CreatorLetterSummary,
+  type LetterLifecycleResponse,
 } from './letters/creator-letter'
 export {
   CreateMediaUploadIntentInputSchema,

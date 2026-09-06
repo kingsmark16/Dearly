@@ -80,6 +80,8 @@ apps/api/src/
       domain/
         letter.ts
       application/
+        change-letter-lifecycle.use-case.ts
+        cleanup-expired-letters.use-case.ts
         create-letter-draft.use-case.ts
         get-creator-letter.use-case.ts
         list-creator-letters.use-case.ts
@@ -93,8 +95,10 @@ apps/api/src/
         dto/
           create-letter-draft.dto.ts
           creator-letter-response.dto.ts
+          permanently-delete-letter.dto.ts
           update-letter-draft.dto.ts
       infrastructure/
+        letter-retention.scheduler.ts
         prisma-letter.repository.ts
       public/
         public-letters.controller.ts
@@ -144,10 +148,10 @@ the publish use case copies it into `publishedContent` without changing the
 Letter's owner, Template snapshot, or Share token. The public reader only
 consumes the published snapshot.
 
-The editor, publish, archive, and trash behaviors should add files to these
-existing seams as they are implemented. Media is nested under `letters`
-because a Media asset belongs to exactly one Letter in v1. Do not move
-persistence or authorization rules into the Next.js feature folders.
+The editor, publish, archive, trash, and retention-cleanup behaviors use these
+existing seams. Media is nested under `letters` because a Media asset belongs
+to exactly one Letter in v1. Do not move persistence or authorization rules
+into the Next.js feature folders.
 
 ## Catalog structure for Categories and Templates
 
@@ -326,6 +330,7 @@ apps/web/src/
       hooks/
     letters/
       api/
+        change-creator-letter-lifecycle.ts
         complete-creator-letter-media-upload.ts
         create-letter-draft.ts
         create-media-upload-intent.ts
@@ -337,6 +342,7 @@ apps/web/src/
         update-creator-letter-draft.ts
         upload-creator-letter-media.ts
       components/
+        creator-letter-list.tsx
         creator-letter-preview.tsx
         draft-editor.tsx
         letter-story/
@@ -344,10 +350,12 @@ apps/web/src/
           letter-story-model.ts
           letter-story-model.test.ts
         media-field-editor.tsx
+        letter-lifecycle-actions.tsx
       hooks/
         use-creator-letter.ts
         use-creator-letter-media.ts
         use-creator-letters.ts
+        use-change-creator-letter-lifecycle.ts
         use-create-letter-draft.ts
         use-delete-creator-letter-media.ts
         use-reorder-creator-letter-media.ts
@@ -432,10 +440,12 @@ In practice:
 ## Implementation order
 
 The catalog, Creator Draft slice, text/media editor, Creator Draft preview,
-publish/share flow, and Published Letter revision flow are implemented. The
-next slices should extend the existing seams in this order:
+publish/share flow, Published Letter revision flow, and Letter lifecycle with
+retention cleanup are implemented. The next slices should extend the existing
+seams in this order:
 
-1. Add archive/trash lifecycle actions and retention cleanup.
+1. Add the next product capability without moving lifecycle or media rules out
+   of the existing Letter seams.
 
 This order keeps the catalog reusable and prevents the editor from becoming a
 large component that hardcodes every occasion and Template.

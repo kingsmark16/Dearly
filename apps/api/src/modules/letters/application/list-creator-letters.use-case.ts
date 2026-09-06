@@ -3,7 +3,7 @@ import {
   CREATOR_LETTER_READER,
   type CreatorLetterReader,
 } from './ports/letter-repository.js'
-import type { CreatorLetterRecord } from '../domain/letter.js'
+import type { CreatorLetterLifecycleRecord } from '../domain/letter.js'
 
 @Injectable()
 export class ListCreatorLettersUseCase {
@@ -12,7 +12,7 @@ export class ListCreatorLettersUseCase {
     private readonly letterRepository: CreatorLetterReader,
   ) {}
 
-  execute(creatorId: string): Promise<CreatorLetterRecord[]> {
+  execute(creatorId: string): Promise<CreatorLetterLifecycleRecord[]> {
     return this.letterRepository.listByCreator(creatorId)
   }
 }
