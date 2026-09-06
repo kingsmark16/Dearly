@@ -30,6 +30,12 @@ export default function HomePage() {
           Sign in
         </Link>
       </div>
+      <Link
+        className="mt-8 text-sm font-semibold text-[var(--dearly-plum)] underline decoration-[var(--dearly-blush)] decoration-2 underline-offset-4 transition hover:brightness-75"
+        href="/templates"
+      >
+        Browse templates first
+      </Link>
     </main>
   )
 }

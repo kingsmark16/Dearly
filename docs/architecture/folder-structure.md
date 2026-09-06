@@ -120,7 +120,7 @@ Categories and Templates belong together in one `catalog` module because they
 are one browsing and selection workflow. They should not be scattered across
 the Letter module, the web pages, and seed scripts.
 
-When the catalog slice is implemented, use this shape:
+The implemented catalog slice uses this shape:
 
 ```text
 apps/api/src/modules/catalog/
@@ -139,11 +139,8 @@ apps/api/src/modules/catalog/
       catalog-repository.ts
   presentation/
     catalog.controller.ts
-    dto/
-      category-response.dto.ts
-      template-response.dto.ts
   infrastructure/
-    prisma-catalog.repository.ts
+    in-memory-catalog.repository.ts
     seed/
       categories/
         love-letter.category.ts
@@ -152,12 +149,19 @@ apps/api/src/modules/catalog/
       templates/
         love-letter/
           our-story.template.ts
-          forever-and-always.template.ts
+          little-things.template.ts
         birthday/
           make-a-wish.template.ts
+          another-year-brighter.template.ts
         anniversary/
           years-together.template.ts
+          still-choosing-you.template.ts
 ```
+
+The first adapter is intentionally curated in memory. It keeps the catalog
+available while Letter persistence is still being designed; a Prisma adapter
+can implement the same repository port later without changing the controller
+or web feature.
 
 The `categories` and `templates` folders under `seed` are only a convenient
 way to organize curated catalog content. The real relationship is still a
@@ -216,13 +220,15 @@ packages/contracts/src/
     template.ts
     template-element.ts
     template-field.ts
+    template-definition.ts
+    template-response.ts
   letters/
     published-letter.ts
   index.ts              public package exports only
 ```
 
-The current `auth` and `letters` contract files are already organized this
-way. Catalog contracts should be added when the catalog endpoint is built.
+The current `auth`, `catalog`, and `letters` contract files are organized this
+way. Catalog contracts validate responses at the web API boundary.
 
 Do not put these in `packages/contracts`:
 
@@ -245,6 +251,7 @@ apps/web/app/
   (public)/
     page.tsx
     letters/[slug]/page.tsx
+    templates/page.tsx
   (auth)/
     sign-in/page.tsx
     sign-up/page.tsx

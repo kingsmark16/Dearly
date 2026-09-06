@@ -10,6 +10,7 @@ import { DatabaseModule } from './infrastructure/database/database.module.js'
 import { EmailDeliveryService } from './infrastructure/email/email-delivery.service.js'
 import { EmailModule } from './infrastructure/email/email.module.js'
 import { CreatorModule } from './modules/creator/creator.module.js'
+import { CatalogModule } from './modules/catalog/catalog.module.js'
 import { LettersModule } from './modules/letters/letters.module.js'
 import { TestMailModule } from './modules/test-mail/test-mail.module.js'
 import { HealthController } from './platform/health/health.controller.js'
@@ -26,6 +27,7 @@ import { PrismaService } from './infrastructure/database/prisma.service.js'
     DatabaseModule,
     EmailModule,
     CreatorModule,
+    CatalogModule,
     LettersModule,
     AuthModule.forRootAsync({
       imports: [DatabaseModule, EmailModule],

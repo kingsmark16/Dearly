@@ -6,7 +6,12 @@
   "exports": {
     ".": "./src/index.ts",
     "./auth/creator-profile": "./src/auth/creator-profile.ts",
-    "./letters/published-letter": "./src/letters/published-letter.ts"
+    "./letters/published-letter": "./src/letters/published-letter.ts",
+    "./catalog/category": "./src/catalog/category.ts",
+    "./catalog/template": "./src/catalog/template.ts",
+    "./catalog/template-definition": "./src/catalog/template-definition.ts",
+    "./catalog/template-element": "./src/catalog/template-element.ts",
+    "./catalog/template-response": "./src/catalog/template-response.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",
