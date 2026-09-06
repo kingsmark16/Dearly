@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { randomBytes } from 'node:crypto'
 import {
+  getEditableLetterContent,
   LetterDraftNotFoundError,
   LetterPublishValidationError,
   type LetterPublishedRecord,
@@ -15,6 +16,7 @@ import {
   MEDIA_ASSET_REPOSITORY,
   type MediaAssetReader,
 } from '../media/application/ports/media-asset-repository.js'
+import { createLetterShareUrl } from './share-url.js'
 
 export type PublishLetterCommand = {
   creatorId: string
@@ -30,16 +32,6 @@ function createShareToken() {
   return randomBytes(32).toString('base64url')
 }
 
-function createShareUrl(webOrigin: string, shareToken: string) {
-  const origin = webOrigin.split(',')[0]?.trim()
-
-  if (!origin) {
-    throw new Error('WEB_ORIGIN must contain at least one web origin')
-  }
-
-  return new URL(`/letters/${shareToken}`, origin).toString()
-}
-
 @Injectable()
 export class PublishLetterUseCase {
   constructor(
@@ -52,12 +44,12 @@ export class PublishLetterUseCase {
   ) {}
 
   async execute(command: PublishLetterCommand): Promise<PublishLetterResult> {
-    const draft = await this.letterRepository.findDraftById(
+    const letter = await this.letterRepository.findByIdForCreator(
       command.creatorId,
       command.letterId,
     )
 
-    if (!draft) {
+    if (!letter) {
       throw new LetterDraftNotFoundError(command.letterId)
     }
 
@@ -66,8 +58,8 @@ export class PublishLetterUseCase {
       command.letterId,
     )
     const problems = validatePublishableLetter(
-      draft.template,
-      draft.content,
+      letter.template,
+      getEditableLetterContent(letter),
       assets,
     )
 
@@ -75,22 +67,27 @@ export class PublishLetterUseCase {
       throw new LetterPublishValidationError(problems)
     }
 
-    const shareToken = createShareToken()
-    const letter = await this.letterRepository.publishDraft({
-      creatorId: command.creatorId,
-      letterId: command.letterId,
-      shareToken,
-    })
+    const publishedLetter =
+      letter.status === 'draft'
+        ? await this.letterRepository.publishDraft({
+            creatorId: command.creatorId,
+            letterId: command.letterId,
+            shareToken: createShareToken(),
+          })
+        : await this.letterRepository.publishRevision({
+            creatorId: command.creatorId,
+            letterId: command.letterId,
+          })
 
-    if (!letter) {
+    if (!publishedLetter) {
       throw new LetterDraftNotFoundError(command.letterId)
     }
 
     return {
-      letter,
-      shareUrl: createShareUrl(
+      letter: publishedLetter,
+      shareUrl: createLetterShareUrl(
         this.configService.getOrThrow<string>('WEB_ORIGIN'),
-        letter.shareToken,
+        publishedLetter.shareToken,
       ),
     }
   }

@@ -189,6 +189,7 @@ function DraftEditorForm({
   mediaError: string | null
   letterId: string
 }) {
+  const isPublished = draft.status === 'published'
   const initialEditorState = createEditorState(draft)
   const [editorState, setEditorState] = useState(initialEditorState)
   const [saveState, setSaveState] = useState<SaveState>('saved')
@@ -337,7 +338,7 @@ function DraftEditorForm({
             className="text-sm font-semibold text-[var(--dearly-plum)] underline underline-offset-4"
             href="/creator"
           >
-            ← Back to Drafts
+            ← Back to Letters
           </Link>
           <Link
             className="rounded-full bg-[var(--dearly-ink)] px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[var(--dearly-plum)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--dearly-plum)]"
@@ -355,10 +356,16 @@ function DraftEditorForm({
         <p className="text-sm uppercase tracking-[0.2em] text-[var(--dearly-plum)]">
           {draft.template.category.name}
         </p>
-        <h1 className="mt-3 text-4xl leading-tight">Edit your Letter Draft</h1>
+        <h1 className="mt-3 text-4xl leading-tight">
+          {isPublished
+            ? 'Edit your Published Letter'
+            : 'Edit your Letter Draft'}
+        </h1>
         <p className="mt-3 leading-7 text-[var(--dearly-muted)]">
-          {draft.template.name} is saved as a Template snapshot. Your Draft is
-          private until you publish it.
+          {draft.template.name} is saved as a Template snapshot.{' '}
+          {isPublished
+            ? 'Your changes are saved as a Pending revision until you publish the updates.'
+            : 'Your Draft is private until you publish it.'}
         </p>
       </header>
 
@@ -500,7 +507,10 @@ function DraftEditorForm({
 
       <PublishLetterPanel
         beforePublish={saveDraftIfNeeded}
+        hasPendingRevision={draft.hasPendingRevision}
         letterId={letterId}
+        shareUrl={draft.shareUrl}
+        status={draft.status}
       />
     </div>
   )

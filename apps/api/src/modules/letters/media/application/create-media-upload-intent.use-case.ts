@@ -2,8 +2,8 @@ import { randomUUID } from 'node:crypto'
 import { Inject, Injectable, Optional } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import {
-  LETTER_REPOSITORY,
-  type LetterDraftReader,
+  CREATOR_LETTER_READER,
+  type LetterOwnerReader,
 } from '../../application/ports/letter-repository.js'
 import { LetterDraftNotFoundError } from '../../domain/letter.js'
 import {
@@ -36,8 +36,8 @@ export type MediaUploadIntentResult = {
 @Injectable()
 export class CreateMediaUploadIntentUseCase {
   constructor(
-    @Inject(LETTER_REPOSITORY)
-    private readonly letterRepository: LetterDraftReader,
+    @Inject(CREATOR_LETTER_READER)
+    private readonly letterRepository: LetterOwnerReader,
     @Inject(MEDIA_ASSET_REPOSITORY)
     private readonly mediaAssetRepository: MediaAssetIntentRepository,
     @Inject(OBJECT_STORAGE)
@@ -50,12 +50,12 @@ export class CreateMediaUploadIntentUseCase {
   async execute(
     command: CreateMediaUploadIntentCommand,
   ): Promise<MediaUploadIntentResult> {
-    const draft = await this.letterRepository.findDraftById(
+    const letter = await this.letterRepository.findByIdForCreator(
       command.creatorId,
       command.letterId,
     )
 
-    if (!draft) {
+    if (!letter) {
       throw new LetterDraftNotFoundError(command.letterId)
     }
 
@@ -65,7 +65,7 @@ export class CreateMediaUploadIntentUseCase {
       new Date(),
     )
     const validatedUpload = validateMediaUpload(
-      draft.template,
+      letter.template,
       command,
       activeAssetCount,
     )

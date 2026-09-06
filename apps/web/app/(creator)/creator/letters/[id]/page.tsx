@@ -10,9 +10,9 @@ export default async function CreatorLetterDraftPage({
 
   return (
     <AuthShell
-      eyebrow="Letter Draft"
+      eyebrow="Letter workspace"
       title="Make it yours."
-      description="Your Draft is private, automatically saved, and ready for your words."
+      description="Your Letter is automatically saved. Published changes stay private until you publish the updates."
     >
       <DraftEditor letterId={id} />
     </AuthShell>

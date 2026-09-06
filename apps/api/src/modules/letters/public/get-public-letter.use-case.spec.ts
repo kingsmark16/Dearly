@@ -24,6 +24,7 @@ async function getTemplate(slug: string) {
 function createPublishedLetter(
   template: LetterPublishedRecord['template'],
   content: Record<string, unknown>,
+  pendingContent: Record<string, unknown> | null = null,
 ): LetterPublishedRecord {
   return {
     id: 'letter-1',
@@ -32,6 +33,7 @@ function createPublishedLetter(
     status: 'published',
     template,
     content,
+    pendingContent,
     shareToken: 'share-token-1',
     createdAt: new Date('2026-09-06T00:00:00.000Z'),
     updatedAt: new Date('2026-09-06T00:01:00.000Z'),
@@ -180,6 +182,40 @@ describe('GetPublicLetterUseCase', () => {
         }),
       ]),
     )
+  })
+
+  it('keeps a Pending revision hidden from Viewers', async () => {
+    const template = await getTemplate('our-story')
+    const { storage } = createStorage()
+    const useCase = new GetPublicLetterUseCase(
+      new FakePublishedLetterReader(
+        createPublishedLetter(
+          template,
+          {
+            recipientName: 'Alex',
+            favoriteMemory: 'The old published memory.',
+          },
+          {
+            recipientName: 'Alex',
+            favoriteMemory: 'The new pending memory.',
+          },
+        ),
+      ),
+      new FakeMediaReader([]),
+      storage,
+    )
+
+    const result = await useCase.execute('share-token-1')
+
+    expect(result?.elements).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'text',
+          body: 'The old published memory.',
+        }),
+      ]),
+    )
+    expect(JSON.stringify(result)).not.toContain('The new pending memory.')
   })
 
   it('does not reveal a Draft or a Letter with the wrong share token', async () => {

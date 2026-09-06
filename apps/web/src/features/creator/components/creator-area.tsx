@@ -136,27 +136,28 @@ export function CreatorArea() {
         ) : null}
       </section>
 
-      <section className="space-y-4" aria-labelledby="your-drafts-heading">
+      <section className="space-y-4" aria-labelledby="your-letters-heading">
         <div>
-          <h2 id="your-drafts-heading" className="text-3xl">
-            Your Drafts
+          <h2 id="your-letters-heading" className="text-3xl">
+            Your Letters
           </h2>
           <p className="mt-2 text-[var(--dearly-muted)]">
-            Drafts are private and cannot be opened through a Share link.
+            Drafts are private. Published Letters stay available through their
+            unlisted Share link while you prepare any future updates.
           </p>
         </div>
 
         {lettersQuery.isLoading ? (
-          <p className="text-[var(--dearly-muted)]">Loading your Drafts…</p>
+          <p className="text-[var(--dearly-muted)]">Loading your Letters…</p>
         ) : lettersQuery.isError ? (
           <p
             className="rounded-xl bg-red-50 p-4 text-sm leading-6 text-red-800"
             role="alert"
           >
-            We could not load your Drafts. Please try again.
+            We could not load your Letters. Please try again.
           </p>
         ) : lettersQuery.data && lettersQuery.data.length > 0 ? (
-          <ul className="space-y-3" aria-label="Your saved drafts">
+          <ul className="space-y-3" aria-label="Your saved letters">
             {lettersQuery.data.map((letter) => (
               <li
                 key={letter.id}
@@ -168,18 +169,27 @@ export function CreatorArea() {
                 >
                   <p className="font-semibold">{letter.title}</p>
                   <p className="mt-1 text-sm font-semibold text-[var(--dearly-plum)]">
-                    Edit Draft
+                    {letter.status === 'published'
+                      ? 'Edit Published Letter'
+                      : 'Edit Draft'}
                   </p>
                 </Link>
                 <p className="mt-1 text-sm text-[var(--dearly-muted)]">
                   {letter.template.category.name} · {letter.template.name}
+                </p>
+                <p className="mt-2 text-sm text-[var(--dearly-muted)]">
+                  {letter.status === 'published'
+                    ? letter.hasPendingRevision
+                      ? 'Pending revision not yet public'
+                      : 'Published'
+                    : 'Draft'}
                 </p>
               </li>
             ))}
           </ul>
         ) : (
           <p className="rounded-2xl border border-dashed border-[var(--dearly-blush)] p-5 text-[var(--dearly-muted)]">
-            You do not have any Drafts yet.
+            You do not have any Letters yet.
           </p>
         )}
       </section>

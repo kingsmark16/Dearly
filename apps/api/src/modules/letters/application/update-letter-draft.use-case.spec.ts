@@ -2,13 +2,14 @@ import { describe, expect, it } from 'vitest'
 import { InMemoryCatalogRepository } from '../../catalog/infrastructure/in-memory-catalog.repository.js'
 import type {
   CreateLetterDraftRecord,
+  CreatorLetterRecord,
   LetterDraftRecord,
   UpdateLetterDraftRecord,
 } from '../domain/letter.js'
-import { UpdateLetterDraftUseCase } from './update-letter-draft.use-case.js'
-import type { LetterRepository } from './ports/letter-repository.js'
+import { UpdateLetterUseCase } from './update-letter.use-case.js'
+import type { LetterEditorRepository } from './ports/letter-repository.js'
 
-class InMemoryLetterRepository implements LetterRepository {
+class InMemoryLetterRepository implements LetterEditorRepository {
   readonly updated: UpdateLetterDraftRecord[] = []
   readonly draft: LetterDraftRecord
 
@@ -49,6 +50,15 @@ class InMemoryLetterRepository implements LetterRepository {
       : undefined
   }
 
+  async findByIdForCreator(
+    creatorId: string,
+    letterId: string,
+  ): Promise<CreatorLetterRecord | undefined> {
+    return this.draft.creatorId === creatorId && this.draft.id === letterId
+      ? this.draft
+      : undefined
+  }
+
   async updateDraft(
     input: UpdateLetterDraftRecord,
   ): Promise<LetterDraftRecord | undefined> {
@@ -60,6 +70,12 @@ class InMemoryLetterRepository implements LetterRepository {
       content: input.content,
       updatedAt: new Date('2026-09-06T00:01:00.000Z'),
     }
+  }
+
+  async updateLetter(
+    input: UpdateLetterDraftRecord,
+  ): Promise<CreatorLetterRecord | undefined> {
+    return this.updateDraft(input)
   }
 }
 
@@ -78,10 +94,10 @@ async function getOurStoryTemplate() {
   return getTemplate('our-story')
 }
 
-describe('UpdateLetterDraftUseCase', () => {
+describe('UpdateLetterUseCase', () => {
   it('updates the owning Creator draft title and editable text Fields', async () => {
     const repository = new InMemoryLetterRepository(await getOurStoryTemplate())
-    const useCase = new UpdateLetterDraftUseCase(repository)
+    const useCase = new UpdateLetterUseCase(repository)
 
     const draft = await useCase.execute({
       creatorId: 'creator-1',
@@ -115,7 +131,7 @@ describe('UpdateLetterDraftUseCase', () => {
 
   it('rejects an unknown Field before persistence', async () => {
     const repository = new InMemoryLetterRepository(await getOurStoryTemplate())
-    const useCase = new UpdateLetterDraftUseCase(repository)
+    const useCase = new UpdateLetterUseCase(repository)
 
     await expect(
       useCase.execute({
@@ -132,7 +148,7 @@ describe('UpdateLetterDraftUseCase', () => {
     const repository = new InMemoryLetterRepository(
       await getTemplate('little-things'),
     )
-    const useCase = new UpdateLetterDraftUseCase(repository)
+    const useCase = new UpdateLetterUseCase(repository)
 
     await expect(
       useCase.execute({
@@ -149,7 +165,7 @@ describe('UpdateLetterDraftUseCase', () => {
 
   it('does not reveal a draft to another Creator', async () => {
     const repository = new InMemoryLetterRepository(await getOurStoryTemplate())
-    const useCase = new UpdateLetterDraftUseCase(repository)
+    const useCase = new UpdateLetterUseCase(repository)
 
     await expect(
       useCase.execute({
@@ -158,7 +174,7 @@ describe('UpdateLetterDraftUseCase', () => {
         title: 'Our story',
         content: {},
       }),
-    ).rejects.toThrow('Letter Draft not found: letter-1')
+    ).rejects.toThrow('Letter not found: letter-1')
     expect(repository.updated).toHaveLength(0)
   })
 })

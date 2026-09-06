@@ -97,6 +97,7 @@ model Letter {
   templateVersion  Int
   templateSnapshot Json
   content          Json
+  publishedContent Json?
   shareToken       String?      @unique @db.VarChar(128)
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
@@ -108,20 +109,20 @@ model Letter {
 }
 
 model MediaAsset {
-  id                String          @id
-  letterId          String
-  fieldId           String          @db.VarChar(120)
-  kind              MediaAssetKind
-  status            MediaAssetStatus @default(PENDING)
-  objectKey         String          @unique @db.VarChar(512)
-  originalFileName  String          @db.VarChar(255)
-  contentType       String          @db.VarChar(128)
-  byteSize          Int
-  durationSeconds   Float?
-  uploadExpiresAt   DateTime
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-  letter            Letter          @relation(fields: [letterId], references: [id], onDelete: Cascade)
+  id               String           @id
+  letterId         String
+  fieldId          String           @db.VarChar(120)
+  kind             MediaAssetKind
+  status           MediaAssetStatus @default(PENDING)
+  objectKey        String           @unique @db.VarChar(512)
+  originalFileName String           @db.VarChar(255)
+  contentType      String           @db.VarChar(128)
+  byteSize         Int
+  durationSeconds  Float?
+  uploadExpiresAt  DateTime
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  letter           Letter           @relation(fields: [letterId], references: [id], onDelete: Cascade)
 
   @@index([letterId, fieldId, status, uploadExpiresAt])
   @@map("media_asset")

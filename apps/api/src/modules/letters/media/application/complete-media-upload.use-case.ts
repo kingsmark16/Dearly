@@ -1,9 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common'
 import {
-  LETTER_REPOSITORY,
-  type LetterDraftReader,
+  CREATOR_LETTER_READER,
+  type LetterOwnerReader,
 } from '../../application/ports/letter-repository.js'
-import { LetterDraftNotFoundError } from '../../domain/letter.js'
+import {
+  getEditableLetterContent,
+  LetterDraftNotFoundError,
+} from '../../domain/letter.js'
 import {
   MediaAssetNotFoundError,
   MediaAssetValidationError,
@@ -25,8 +28,8 @@ export type CompleteMediaUploadCommand = {
 @Injectable()
 export class CompleteMediaUploadUseCase {
   constructor(
-    @Inject(LETTER_REPOSITORY)
-    private readonly letterRepository: LetterDraftReader,
+    @Inject(CREATOR_LETTER_READER)
+    private readonly letterRepository: LetterOwnerReader,
     @Inject(MEDIA_ASSET_REPOSITORY)
     private readonly mediaAssetRepository: MediaAssetRepository,
     @Inject(OBJECT_STORAGE)
@@ -36,12 +39,12 @@ export class CompleteMediaUploadUseCase {
   async execute(
     command: CompleteMediaUploadCommand,
   ): Promise<MediaAssetRecord> {
-    const draft = await this.letterRepository.findDraftById(
+    const letter = await this.letterRepository.findByIdForCreator(
       command.creatorId,
       command.letterId,
     )
 
-    if (!draft) {
+    if (!letter) {
       throw new LetterDraftNotFoundError(command.letterId)
     }
 
@@ -82,8 +85,8 @@ export class CompleteMediaUploadUseCase {
     }
 
     const content = attachMediaAsset(
-      draft.template,
-      draft.content,
+      letter.template,
+      getEditableLetterContent(letter),
       asset.fieldId,
       asset.id,
     )

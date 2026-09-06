@@ -94,7 +94,7 @@ describe('CompleteMediaUploadUseCase', () => {
     }
     repository.completeAndAttach.mockResolvedValue(completedAsset)
     const useCase = new CompleteMediaUploadUseCase(
-      { findDraftById: vi.fn().mockResolvedValue(draft) },
+      { findByIdForCreator: vi.fn().mockResolvedValue(draft) },
       repository,
       createStorage(),
     )
@@ -122,7 +122,7 @@ describe('CompleteMediaUploadUseCase', () => {
     const repository = new FakeMediaAssetRepository()
     const completeAndAttach = repository.completeAndAttach
     const useCase = new CompleteMediaUploadUseCase(
-      { findDraftById: vi.fn().mockResolvedValue(draft) },
+      { findByIdForCreator: vi.fn().mockResolvedValue(draft) },
       repository,
       createStorage({ headObject: vi.fn().mockResolvedValue(undefined) }),
     )
@@ -148,7 +148,7 @@ describe('CompleteMediaUploadUseCase', () => {
       }),
     })
     const useCase = new CompleteMediaUploadUseCase(
-      { findDraftById: vi.fn().mockResolvedValue(draft) },
+      { findByIdForCreator: vi.fn().mockResolvedValue(draft) },
       repository,
       storage,
     )

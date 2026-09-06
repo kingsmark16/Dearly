@@ -3,11 +3,15 @@ import { LetterStatus, Prisma } from '../../../generated/prisma/client.js'
 import { PrismaService } from '../../../infrastructure/database/prisma.service.js'
 import type {
   CreateLetterDraftRecord,
+  CreatorLetterRecord,
   LetterDraftRecord,
   LetterPublishedRecord,
+  UpdateLetterRecord,
   UpdateLetterDraftRecord,
 } from '../domain/letter.js'
 import type {
+  CreatorLetterReader,
+  LetterEditorRepository,
   LetterPublishingRepository,
   LetterRepository,
   PublishedLetterReader,
@@ -61,6 +65,7 @@ function toPublishedRecord(letter: {
   shareToken: string | null
   templateSnapshot: Prisma.JsonValue
   content: Prisma.JsonValue
+  publishedContent: Prisma.JsonValue | null
   createdAt: Date
   updatedAt: Date
 }): LetterPublishedRecord {
@@ -69,6 +74,12 @@ function toPublishedRecord(letter: {
       `Expected a published Letter with a Share token: ${letter.id}`,
     )
   }
+
+  const workingContent = asJsonObject(letter.content, 'content')
+  const publishedContent = asJsonObject(
+    letter.publishedContent ?? letter.content,
+    'publishedContent',
+  )
 
   return {
     id: letter.id,
@@ -80,15 +91,47 @@ function toPublishedRecord(letter: {
       letter.templateSnapshot,
       'templateSnapshot',
     ) as unknown as LetterPublishedRecord['template'],
-    content: asJsonObject(letter.content, 'content'),
+    content: publishedContent,
+    pendingContent:
+      JSON.stringify(workingContent) === JSON.stringify(publishedContent)
+        ? null
+        : workingContent,
     createdAt: letter.createdAt,
     updatedAt: letter.updatedAt,
   }
 }
 
+function toCreatorRecord(letter: {
+  id: string
+  creatorId: string
+  title: string
+  status: LetterStatus
+  shareToken: string | null
+  templateSnapshot: Prisma.JsonValue
+  content: Prisma.JsonValue
+  publishedContent: Prisma.JsonValue | null
+  createdAt: Date
+  updatedAt: Date
+}): CreatorLetterRecord {
+  if (letter.status === LetterStatus.DRAFT) {
+    return toDraftRecord(letter)
+  }
+
+  if (letter.status === LetterStatus.PUBLISHED) {
+    return toPublishedRecord(letter)
+  }
+
+  throw new Error(`Expected an editable Letter: ${letter.id}`)
+}
+
 @Injectable()
 export class PrismaLetterRepository
-  implements LetterRepository, LetterPublishingRepository, PublishedLetterReader
+  implements
+    LetterRepository,
+    CreatorLetterReader,
+    LetterEditorRepository,
+    LetterPublishingRepository,
+    PublishedLetterReader
 {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
@@ -110,13 +153,31 @@ export class PrismaLetterRepository
     return toDraftRecord(letter)
   }
 
-  async listByCreator(creatorId: string): Promise<LetterDraftRecord[]> {
+  async listByCreator(creatorId: string): Promise<CreatorLetterRecord[]> {
     const letters = await this.prisma.letter.findMany({
-      where: { creatorId, status: LetterStatus.DRAFT },
+      where: {
+        creatorId,
+        status: { in: [LetterStatus.DRAFT, LetterStatus.PUBLISHED] },
+      },
       orderBy: { updatedAt: 'desc' },
     })
 
-    return letters.map(toDraftRecord)
+    return letters.map(toCreatorRecord)
+  }
+
+  async findByIdForCreator(
+    creatorId: string,
+    letterId: string,
+  ): Promise<CreatorLetterRecord | undefined> {
+    const letter = await this.prisma.letter.findFirst({
+      where: {
+        id: letterId,
+        creatorId,
+        status: { in: [LetterStatus.DRAFT, LetterStatus.PUBLISHED] },
+      },
+    })
+
+    return letter ? toCreatorRecord(letter) : undefined
   }
 
   async findDraftById(
@@ -166,6 +227,38 @@ export class PrismaLetterRepository
     })
   }
 
+  async updateLetter(
+    input: UpdateLetterRecord,
+  ): Promise<CreatorLetterRecord | undefined> {
+    return this.prisma.$transaction(async (transaction) => {
+      const result = await transaction.letter.updateMany({
+        where: {
+          id: input.letterId,
+          creatorId: input.creatorId,
+          status: { in: [LetterStatus.DRAFT, LetterStatus.PUBLISHED] },
+        },
+        data: {
+          title: input.title,
+          content: input.content as Prisma.InputJsonObject,
+        },
+      })
+
+      if (result.count === 0) {
+        return undefined
+      }
+
+      const letter = await transaction.letter.findFirst({
+        where: {
+          id: input.letterId,
+          creatorId: input.creatorId,
+          status: { in: [LetterStatus.DRAFT, LetterStatus.PUBLISHED] },
+        },
+      })
+
+      return letter ? toCreatorRecord(letter) : undefined
+    })
+  }
+
   async publishDraft(input: {
     creatorId: string
     letterId: string
@@ -184,6 +277,18 @@ export class PrismaLetterRepository
         return toPublishedRecord(alreadyPublished)
       }
 
+      const draft = await transaction.letter.findFirst({
+        where: {
+          id: input.letterId,
+          creatorId: input.creatorId,
+          status: LetterStatus.DRAFT,
+        },
+      })
+
+      if (!draft) {
+        return undefined
+      }
+
       const result = await transaction.letter.updateMany({
         where: {
           id: input.letterId,
@@ -193,6 +298,7 @@ export class PrismaLetterRepository
         data: {
           status: LetterStatus.PUBLISHED,
           shareToken: input.shareToken,
+          publishedContent: draft.content as Prisma.InputJsonValue,
         },
       })
 
@@ -209,6 +315,40 @@ export class PrismaLetterRepository
           ? toPublishedRecord(publishedAfterRace)
           : undefined
       }
+
+      const published = await transaction.letter.findFirst({
+        where: {
+          id: input.letterId,
+          creatorId: input.creatorId,
+          status: LetterStatus.PUBLISHED,
+        },
+      })
+
+      return published ? toPublishedRecord(published) : undefined
+    })
+  }
+
+  async publishRevision(input: {
+    creatorId: string
+    letterId: string
+  }): Promise<LetterPublishedRecord | undefined> {
+    return this.prisma.$transaction(async (transaction) => {
+      const current = await transaction.letter.findFirst({
+        where: {
+          id: input.letterId,
+          creatorId: input.creatorId,
+          status: LetterStatus.PUBLISHED,
+        },
+      })
+
+      if (!current) {
+        return undefined
+      }
+
+      await transaction.letter.update({
+        where: { id: current.id },
+        data: { publishedContent: current.content as Prisma.InputJsonValue },
+      })
 
       const published = await transaction.letter.findFirst({
         where: {

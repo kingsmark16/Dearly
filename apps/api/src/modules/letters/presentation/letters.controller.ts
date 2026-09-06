@@ -10,15 +10,17 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { Session, type UserSession } from '@thallesp/nestjs-better-auth'
 import { CatalogTemplateNotFoundError } from '../../catalog/domain/template.js'
 import { VerifiedCreatorGuard } from '../../creator/guards/verified-creator.guard.js'
 import { CreateLetterDraftUseCase } from '../application/create-letter-draft.use-case.js'
-import { GetCreatorLetterDraftUseCase } from '../application/get-creator-letter-draft.use-case.js'
+import { GetCreatorLetterUseCase } from '../application/get-creator-letter.use-case.js'
 import { ListCreatorLettersUseCase } from '../application/list-creator-letters.use-case.js'
 import { PublishLetterUseCase } from '../application/publish-letter.use-case.js'
-import { UpdateLetterDraftUseCase } from '../application/update-letter-draft.use-case.js'
+import { UpdateLetterUseCase } from '../application/update-letter.use-case.js'
 import {
+  LetterNotFoundError,
   LetterDraftNotFoundError,
   LetterDraftValidationError,
   LetterPublishValidationError,
@@ -29,6 +31,8 @@ import {
   toCreatorLetterSummaryResponse,
 } from './dto/creator-letter-response.dto.js'
 import { UpdateLetterDraftDto } from './dto/update-letter-draft.dto.js'
+import { createLetterShareUrl } from '../application/share-url.js'
+import type { CreatorLetterRecord } from '../domain/letter.js'
 
 @Controller('letters')
 @UseGuards(VerifiedCreatorGuard)
@@ -36,14 +40,16 @@ export class LettersController {
   constructor(
     @Inject(CreateLetterDraftUseCase)
     private readonly createLetterDraftUseCase: CreateLetterDraftUseCase,
-    @Inject(GetCreatorLetterDraftUseCase)
-    private readonly getCreatorLetterDraftUseCase: GetCreatorLetterDraftUseCase,
+    @Inject(GetCreatorLetterUseCase)
+    private readonly getCreatorLetterUseCase: GetCreatorLetterUseCase,
     @Inject(ListCreatorLettersUseCase)
     private readonly listCreatorLettersUseCase: ListCreatorLettersUseCase,
     @Inject(PublishLetterUseCase)
     private readonly publishLetterUseCase: PublishLetterUseCase,
-    @Inject(UpdateLetterDraftUseCase)
-    private readonly updateLetterDraftUseCase: UpdateLetterDraftUseCase,
+    @Inject(UpdateLetterUseCase)
+    private readonly updateLetterUseCase: UpdateLetterUseCase,
+    @Inject(ConfigService)
+    private readonly configService: ConfigService,
   ) {}
 
   @Get()
@@ -52,7 +58,9 @@ export class LettersController {
       session.user.id,
     )
 
-    return letters.map(toCreatorLetterSummaryResponse)
+    return letters.map((letter) =>
+      toCreatorLetterSummaryResponse(letter, this.getShareUrl(letter)),
+    )
   }
 
   @Get(':id')
@@ -61,14 +69,14 @@ export class LettersController {
     @Param('id') letterId: string,
   ) {
     try {
-      const letter = await this.getCreatorLetterDraftUseCase.execute(
+      const letter = await this.getCreatorLetterUseCase.execute(
         session.user.id,
         letterId,
       )
 
-      return toCreatorLetterDraftResponse(letter)
+      return toCreatorLetterDraftResponse(letter, this.getShareUrl(letter))
     } catch (error: unknown) {
-      this.throwDraftError(error)
+      this.throwLetterError(error)
     }
   }
 
@@ -84,7 +92,7 @@ export class LettersController {
         title: input.title,
       })
 
-      return toCreatorLetterDraftResponse(letter)
+      return toCreatorLetterDraftResponse(letter, null)
     } catch (error: unknown) {
       if (error instanceof CatalogTemplateNotFoundError) {
         throw new NotFoundException('Catalog template not found')
@@ -101,16 +109,16 @@ export class LettersController {
     @Body() input: UpdateLetterDraftDto,
   ) {
     try {
-      const letter = await this.updateLetterDraftUseCase.execute({
+      const letter = await this.updateLetterUseCase.execute({
         creatorId: session.user.id,
         letterId,
         title: input.title,
         content: input.content,
       })
 
-      return toCreatorLetterDraftResponse(letter)
+      return toCreatorLetterDraftResponse(letter, this.getShareUrl(letter))
     } catch (error: unknown) {
-      this.throwDraftError(error)
+      this.throwLetterError(error)
     }
   }
 
@@ -138,13 +146,26 @@ export class LettersController {
         })
       }
 
-      this.throwDraftError(error)
+      this.throwLetterError(error)
     }
   }
 
-  private throwDraftError(error: unknown): never {
+  private getShareUrl(letter: CreatorLetterRecord) {
+    return letter.status === 'published'
+      ? createLetterShareUrl(
+          this.configService.getOrThrow<string>('WEB_ORIGIN'),
+          letter.shareToken,
+        )
+      : null
+  }
+
+  private throwLetterError(error: unknown): never {
     if (error instanceof LetterDraftNotFoundError) {
       throw new NotFoundException('Letter Draft not found')
+    }
+
+    if (error instanceof LetterNotFoundError) {
+      throw new NotFoundException('Letter not found')
     }
 
     if (error instanceof LetterDraftValidationError) {

@@ -1,11 +1,15 @@
 import type {
   CreateLetterDraftRecord,
+  CreatorLetterRecord,
   LetterDraftRecord,
   LetterPublishedRecord,
+  UpdateLetterRecord,
   UpdateLetterDraftRecord,
 } from '../../domain/letter.js'
 
 export const LETTER_REPOSITORY = Symbol('LETTER_REPOSITORY')
+export const CREATOR_LETTER_READER = Symbol('CREATOR_LETTER_READER')
+export const LETTER_EDITOR_REPOSITORY = Symbol('LETTER_EDITOR_REPOSITORY')
 export const LETTER_PUBLISHING_REPOSITORY = Symbol(
   'LETTER_PUBLISHING_REPOSITORY',
 )
@@ -18,19 +22,41 @@ export interface LetterDraftReader {
   ): Promise<LetterDraftRecord | undefined>
 }
 
-export interface LetterRepository extends LetterDraftReader {
+export interface LetterOwnerReader {
+  findByIdForCreator(
+    creatorId: string,
+    letterId: string,
+  ): Promise<CreatorLetterRecord | undefined>
+}
+
+export interface CreatorLetterReader extends LetterOwnerReader {
+  listByCreator(creatorId: string): Promise<CreatorLetterRecord[]>
+}
+
+export interface LetterEditorRepository extends CreatorLetterReader {
+  updateLetter(
+    input: UpdateLetterRecord,
+  ): Promise<CreatorLetterRecord | undefined>
+}
+
+export interface LetterRepository
+  extends LetterDraftReader, CreatorLetterReader {
   createDraft(input: CreateLetterDraftRecord): Promise<LetterDraftRecord>
-  listByCreator(creatorId: string): Promise<LetterDraftRecord[]>
   updateDraft(
     input: UpdateLetterDraftRecord,
   ): Promise<LetterDraftRecord | undefined>
 }
 
-export interface LetterPublishingRepository extends LetterDraftReader {
+export interface LetterPublishingRepository
+  extends LetterDraftReader, LetterOwnerReader {
   publishDraft(input: {
     creatorId: string
     letterId: string
     shareToken: string
+  }): Promise<LetterPublishedRecord | undefined>
+  publishRevision(input: {
+    creatorId: string
+    letterId: string
   }): Promise<LetterPublishedRecord | undefined>
 }
 
