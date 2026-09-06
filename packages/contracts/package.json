@@ -1,0 +1,25 @@
+{
+  "name": "@dearly/contracts",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./auth/creator-profile": "./src/auth/creator-profile.ts",
+    "./letters/published-letter": "./src/letters/published-letter.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "zod": "4.5.4"
+  },
+  "devDependencies": {
+    "eslint": "9.39.5",
+    "typescript": "6.0.3",
+    "vitest": "5.0.0"
+  }
+}

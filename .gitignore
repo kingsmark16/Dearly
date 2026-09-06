@@ -1,0 +1,17 @@
+node_modules/
+.next/
+dist/
+.turbo/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+
+.env
+.env.*
+!.env.example
+
+apps/*/public/generated/
+apps/api/uploads/
+apps/api/src/generated/
+prisma/*.db
