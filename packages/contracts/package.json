@@ -4,7 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./auth/creator-profile": "./src/auth/creator-profile.ts",
+    "./letters/published-letter": "./src/letters/published-letter.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import type { PublishedLetter } from '@dearly/contracts'
+import type { PublishedLetter } from '@dearly/contracts/letters/published-letter'
 
 type SeededLetter = {
   slug: string
