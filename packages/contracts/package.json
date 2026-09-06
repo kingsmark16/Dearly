@@ -11,7 +11,10 @@
     "./catalog/template": "./src/catalog/template.ts",
     "./catalog/template-definition": "./src/catalog/template-definition.ts",
     "./catalog/template-element": "./src/catalog/template-element.ts",
-    "./catalog/template-response": "./src/catalog/template-response.ts"
+    "./catalog/template-response": "./src/catalog/template-response.ts",
+    "./letters/create-draft": "./src/letters/create-draft.ts",
+    "./letters/update-draft": "./src/letters/update-draft.ts",
+    "./letters/creator-letter": "./src/letters/creator-letter.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",

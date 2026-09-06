@@ -77,6 +77,23 @@ apps/api/src/
       guards/
     letters/
       letters.module.ts
+      domain/
+        letter.ts
+      application/
+        create-letter-draft.use-case.ts
+        get-creator-letter-draft.use-case.ts
+        list-creator-letters.use-case.ts
+        update-letter-draft.use-case.ts
+        ports/
+          letter-repository.ts
+      presentation/
+        letters.controller.ts
+        dto/
+          create-letter-draft.dto.ts
+          creator-letter-response.dto.ts
+          update-letter-draft.dto.ts
+      infrastructure/
+        prisma-letter.repository.ts
       public/
         public-letters.controller.ts
         public-letters.service.ts
@@ -101,18 +118,21 @@ Use these meanings:
 - `platform` contains cross-application operational endpoints such as health.
 - `generated` contains generated Prisma output and is not hand-written source.
 
-When the Letter feature becomes larger, its internal shape can grow to:
+The current Letter feature separates the Creator Draft slice from the existing
+public seeded-Letter slice:
 
 ```text
 modules/letters/
   domain/                 Letter rules and lifecycle types
-  application/            create, save, publish, archive use cases
+  application/            create/list/save/publish use cases and ports
   presentation/           HTTP controllers and response DTOs
-  infrastructure/         Prisma repository and media adapters
+  infrastructure/         Prisma repository and future media adapters
+  public/                  public Viewer read model and controller
 ```
 
-Do not create all four folders just for visual symmetry. The current thin
-`letters/public` slice is appropriate until those behaviors exist.
+The editor, publish, archive, trash, and media behaviors should add files to
+these existing seams as they are implemented. Do not move persistence or
+authorization rules into the Next.js feature folders.
 
 ## Catalog structure for Categories and Templates
 
@@ -158,10 +178,11 @@ apps/api/src/modules/catalog/
           still-choosing-you.template.ts
 ```
 
-The first adapter is intentionally curated in memory. It keeps the catalog
-available while Letter persistence is still being designed; a Prisma adapter
-can implement the same repository port later without changing the controller
-or web feature.
+The catalog remains intentionally curated in memory. Letter Draft persistence
+is Prisma-backed, while a Prisma-backed catalog adapter can be introduced later
+when catalog administration or database-managed Templates are needed. That
+adapter should implement the same repository port without changing the
+controller or web feature.
 
 The `categories` and `templates` folders under `seed` are only a convenient
 way to organize curated catalog content. The real relationship is still a
@@ -223,12 +244,15 @@ packages/contracts/src/
     template-definition.ts
     template-response.ts
   letters/
+    create-draft.ts
+    creator-letter.ts
     published-letter.ts
   index.ts              public package exports only
 ```
 
 The current `auth`, `catalog`, and `letters` contract files are organized this
-way. Catalog contracts validate responses at the web API boundary.
+way. Catalog and Creator Letter contracts validate responses at the web API
+boundary.
 
 Do not put these in `packages/contracts`:
 
@@ -257,6 +281,7 @@ apps/web/app/
     sign-up/page.tsx
   (creator)/
     creator/page.tsx
+    creator/letters/[id]/page.tsx
   layout.tsx
   globals.css
   error.tsx
@@ -284,9 +309,18 @@ apps/web/src/
       hooks/
     letters/
       api/
+        create-letter-draft.ts
+        get-creator-letter-draft.ts
+        get-creator-letters.ts
+        update-creator-letter-draft.ts
       components/
+        draft-editor.tsx
         elements/
       hooks/
+        use-creator-letter.ts
+        use-creator-letters.ts
+        use-create-letter-draft.ts
+        use-update-creator-letter-draft.ts
     media/
       api/
       components/
@@ -365,14 +399,13 @@ In practice:
 
 ## Implementation order
 
-The next structural/product slice should be the read-only Catalog:
+The catalog, initial Creator Draft slice, and text Draft editor are
+implemented. The next slices should extend the existing seams in this order:
 
-1. Add Category and Template contracts.
-2. Add the Catalog domain definition and validation for typed Fields/Elements.
-3. Add the first Categories and Templates as versioned seed data.
-4. Add a NestJS Catalog module and read-only endpoint.
-5. Add the Next.js catalog feature that lists Categories and Templates.
-6. Add Letter creation only after a Creator can select a Template.
+1. Add media upload orchestration through private Cloudflare R2 objects.
+2. Add publish validation, immutable Template snapshot handling, and the
+   public Share link/QR code flow.
+3. Add archive/trash lifecycle actions and retention cleanup.
 
 This order keeps the catalog reusable and prevents the editor from becoming a
 large component that hardcodes every occasion and Template.

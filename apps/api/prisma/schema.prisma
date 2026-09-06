@@ -7,8 +7,15 @@ datasource db {
   provider = "postgresql"
 }
 
+enum LetterStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+  TRASHED
+}
+
 // Better Auth owns these four models. Dearly's Creator profile and letter
-// models will be added in later vertical slices and will relate to User.
+// ownership is represented by the Letter relation below.
 model User {
   id            String    @id
   name          String
@@ -19,6 +26,7 @@ model User {
   updatedAt     DateTime  @updatedAt
   sessions      Session[]
   accounts      Account[]
+  letters       Letter[]
 
   @@map("user")
 }
@@ -68,4 +76,22 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+model Letter {
+  id               String       @id @default(cuid())
+  creatorId        String
+  title            String       @db.VarChar(120)
+  status           LetterStatus @default(DRAFT)
+  templateSlug     String       @db.VarChar(120)
+  templateVersion  Int
+  templateSnapshot Json
+  content          Json
+  shareToken       String?      @unique @db.VarChar(128)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  creator          User         @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@index([creatorId, status, updatedAt])
+  @@map("letter")
 }
