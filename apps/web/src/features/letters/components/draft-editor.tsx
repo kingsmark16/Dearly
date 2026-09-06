@@ -331,12 +331,20 @@ function DraftEditorForm({
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <Link
-          className="text-sm font-semibold text-[var(--dearly-plum)] underline underline-offset-4"
-          href="/creator"
-        >
-          ← Back to Drafts
-        </Link>
+        <div className="flex flex-wrap items-center gap-4">
+          <Link
+            className="text-sm font-semibold text-[var(--dearly-plum)] underline underline-offset-4"
+            href="/creator"
+          >
+            ← Back to Drafts
+          </Link>
+          <Link
+            className="rounded-full bg-[var(--dearly-ink)] px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[var(--dearly-plum)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--dearly-plum)]"
+            href={`/creator/letters/${letterId}/preview`}
+          >
+            Preview Letter
+          </Link>
+        </div>
         <p className="text-sm text-[var(--dearly-muted)]" role="status">
           {saveLabel}
         </p>

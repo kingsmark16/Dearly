@@ -289,6 +289,7 @@ apps/web/app/
   (creator)/
     creator/page.tsx
     creator/letters/[id]/page.tsx
+    creator/letters/[id]/preview/page.tsx
   layout.tsx
   globals.css
   error.tsx
@@ -327,9 +328,13 @@ apps/web/src/
         update-creator-letter-draft.ts
         upload-creator-letter-media.ts
       components/
+        creator-letter-preview.tsx
         draft-editor.tsx
+        letter-story/
+          letter-story.tsx
+          letter-story-model.ts
+          letter-story-model.test.ts
         media-field-editor.tsx
-        elements/
       hooks/
         use-creator-letter.ts
         use-creator-letter-media.ts
@@ -351,7 +356,8 @@ Keep route pages thin: load route parameters, call a feature API function,
 handle route-level errors, and compose the feature component. Server Components
 should own initial public Letter reads where possible. Small Client Components
 should own stateful behavior such as click-to-reveal, audio controls, and GSAP
-animation. Letter-owned media upload and ordering code stays in
+animation. The reusable `letter-story` renderer resolves a Template snapshot
+into an ordered story and keeps preview-only interactions local. Letter-owned media upload and ordering code stays in
 `features/letters`; create a top-level `features/media` only if assets become
 a reusable cross-Letter resource.
 
@@ -416,13 +422,12 @@ In practice:
 
 ## Implementation order
 
-The catalog, initial Creator Draft slice, and text Draft editor are
-implemented. The next slices should extend the existing seams in this order:
+The catalog, Creator Draft slice, text/media editor, and Creator Draft preview
+are implemented. The next slices should extend the existing seams in this order:
 
-1. Add media upload orchestration through private Cloudflare R2 objects.
-2. Add publish validation, immutable Template snapshot handling, and the
+1. Add publish validation, immutable Template snapshot handling, and the
    public Share link/QR code flow.
-3. Add archive/trash lifecycle actions and retention cleanup.
+2. Add archive/trash lifecycle actions and retention cleanup.
 
 This order keeps the catalog reusable and prevents the editor from becoming a
 large component that hardcodes every occasion and Template.
