@@ -21,3 +21,14 @@ export const PublishedLetterSchema = z.object({
 })
 
 export type PublishedLetter = z.infer<typeof PublishedLetterSchema>
+
+export const CreatorProfileSchema = z.object({
+  creator: z.object({
+    id: z.string().min(1),
+    name: z.string().min(1),
+    email: z.string().email(),
+    emailVerified: z.literal(true),
+  }),
+})
+
+export type CreatorProfile = z.infer<typeof CreatorProfileSchema>

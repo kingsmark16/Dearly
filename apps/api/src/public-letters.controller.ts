@@ -5,8 +5,10 @@ import {
   NotFoundException,
   Param,
 } from '@nestjs/common'
+import { AllowAnonymous } from '@thallesp/nestjs-better-auth'
 import { PublicLettersService } from './public-letters.service.js'
 
+@AllowAnonymous()
 @Controller('public/letters')
 export class PublicLettersController {
   constructor(

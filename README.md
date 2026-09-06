@@ -9,15 +9,17 @@ does not need one and can read a letter when they possess its link.
 The repository currently contains the first vertical slice from the ticket
 queue:
 
-- `apps/web` renders the public Viewer experience with Next.js.
-- `apps/api` exposes the canonical public-letter endpoint with NestJS.
+- `apps/web` renders the public Viewer and Creator experiences with Next.js.
+- `apps/api` exposes the canonical public-letter endpoint and Creator API with NestJS.
 - `packages/contracts` validates the API response with Zod.
 - `packages/ui` contains the first shared shadcn-style UI primitive.
+- Better Auth handles email/password authentication and email verification.
+- Prisma 7 persists Better Auth users, sessions, accounts, and verification tokens.
 - `/letters/our-story` opens a deterministic seeded Published Letter.
 
-The seed is intentionally in memory for this first ticket. Prisma/PostgreSQL,
-Better Auth, R2, Redis, and background jobs are introduced at the tickets that
-need them, with their ownership and production topology documented in
+The letter seed is intentionally in memory. Creator authentication now uses
+the local PostgreSQL service. R2, Redis, and background jobs are introduced at
+the tickets that need them, with their ownership and production topology documented in
 [`docs/adr/0004-next-nest-monorepo.md`](docs/adr/0004-next-nest-monorepo.md).
 
 ## Recommended local setup
@@ -52,7 +54,7 @@ Then open:
 - API health: `http://127.0.0.1:4000/api/v1/health`
 - Seeded letter JSON: `http://127.0.0.1:4000/api/v1/public/letters/our-story`
 
-Start local infrastructure when a database-backed ticket needs it:
+Start local infrastructure before using Creator authentication:
 
 ```powershell
 docker compose up -d
@@ -67,6 +69,19 @@ Copy-Item .env.example .env
 
 Do not commit `.env` or any real authentication, database, R2, or Redis
 credentials.
+
+Generate the Prisma client and apply local migrations:
+
+```powershell
+pnpm --filter @dearly/api db:generate
+pnpm --filter @dearly/api db:migrate --name auth
+```
+
+Then open `http://127.0.0.1:3000/sign-up`. Dearly sends local verification
+emails through Mailpit's SMTP server; view them at `http://127.0.0.1:8025`. A
+Creator must verify the email before `/creator` or the protected Creator API
+can be used. Production must provide a real SMTP service through the `SMTP_*`
+variables; Mailpit is rejected in production configuration.
 
 For a containerized deployment, set `DEARLY_API_URL` to the internal API
 service, such as `http://api:4000/api/v1`, and set `WEB_ORIGIN` to the public
@@ -91,6 +106,10 @@ $env:PLAYWRIGHT_BROWSER_CHANNEL = 'chrome'
 pnpm test:e2e
 Remove-Item Env:PLAYWRIGHT_BROWSER_CHANNEL
 ```
+
+The browser test expects the local PostgreSQL container and its migration to
+be available. It starts the API in test mode, which uses an in-memory email
+adapter. The verification-link route returns `404` outside test mode.
 
 The test uses port `3100` for the Next.js test server so it does not collide
 with an ordinary local development server on `3000`. In CI, install the

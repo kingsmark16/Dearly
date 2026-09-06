@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 export default function HomePage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center px-6 py-16 text-center">
@@ -14,6 +16,20 @@ export default function HomePage() {
       <p className="mt-8 text-sm text-[var(--dearly-muted)]">
         Open a shared Dearly link to read a letter made for you.
       </p>
+      <div className="mt-10 flex flex-wrap justify-center gap-4">
+        <Link
+          className="inline-flex min-h-11 items-center justify-center rounded-full bg-[var(--dearly-plum)] px-6 py-3 text-sm font-semibold text-white transition hover:brightness-110"
+          href="/sign-up"
+        >
+          Create a letter
+        </Link>
+        <Link
+          className="inline-flex min-h-11 items-center justify-center rounded-full border border-[var(--dearly-plum)] px-6 py-3 text-sm font-semibold text-[var(--dearly-plum)] transition hover:bg-white"
+          href="/sign-in"
+        >
+          Sign in
+        </Link>
+      </div>
     </main>
   )
 }

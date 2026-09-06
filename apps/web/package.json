@@ -15,6 +15,7 @@
     "@dearly/ui": "workspace:*",
     "@tanstack/react-query": "5.102.8",
     "axios": "1.20.0",
+    "better-auth": "1.7.3",
     "clsx": "2.1.1",
     "gsap": "3.15.0",
     "next": "16.3.4",

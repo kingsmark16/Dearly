@@ -13,4 +13,5 @@ test-results/
 
 apps/*/public/generated/
 apps/api/uploads/
+apps/api/src/generated/
 prisma/*.db
