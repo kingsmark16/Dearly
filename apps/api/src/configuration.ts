@@ -21,7 +21,7 @@ export const environmentValidationSchema = Joi.object({
   SMTP_SECURE: Joi.boolean().truthy('true').falsy('false').default(false),
   SMTP_USER: Joi.string().allow('').default(''),
   SMTP_PASSWORD: Joi.string().allow('').default(''),
-  SMTP_FROM: Joi.string().email().default('noreply@dearly.local'),
+  SMTP_FROM: Joi.string().email().default('noreply@dearly.dev'),
 })
 
 export function validateEnvironment(

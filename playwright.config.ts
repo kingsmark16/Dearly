@@ -28,6 +28,7 @@ export default defineConfig({
         BETTER_AUTH_SECRET: 'dearly-playwright-test-secret-that-is-long-enough',
         BETTER_AUTH_URL: 'http://127.0.0.1:4000',
         WEB_ORIGIN: 'http://127.0.0.1:3100',
+        SMTP_FROM: 'noreply@dearly.dev',
       },
       // The API must be started in test mode so the in-memory verification
       // mailbox exists; never reuse an ordinary development API here.

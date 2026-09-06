@@ -1,5 +1,11 @@
-import 'dotenv/config'
+import { config as loadEnv } from 'dotenv'
 import { defineConfig } from 'prisma/config'
+
+// Package commands run from apps/api, while the documented .env lives at the
+// repository root. Load both locations so Prisma uses the same configuration
+// as the Nest application in either workspace layout.
+loadEnv({ path: '.env' })
+loadEnv({ path: '../../.env' })
 
 const localDatabaseUrl = 'postgresql://dearly:dearly@127.0.0.1:5432/dearly'
 

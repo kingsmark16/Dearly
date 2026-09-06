@@ -20,6 +20,7 @@ import { TestMailModule } from './test-mail.module.js'
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: ['.env', '../../.env'],
       validationSchema: environmentValidationSchema,
       validate: validateEnvironment,
     }),
