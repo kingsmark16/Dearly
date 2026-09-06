@@ -1,0 +1,11 @@
+.agents/
+.claude/
+.next/
+.turbo/
+coverage/
+dist/
+node_modules/
+playwright-report/
+test-results/
+pnpm-lock.yaml
+apps/web/next-env.d.ts

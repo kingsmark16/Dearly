@@ -1,0 +1,36 @@
+@import 'tailwindcss';
+
+:root {
+  --dearly-ink: #332b3b;
+  --dearly-muted: #756b7d;
+  --dearly-paper: #fffaf4;
+  --dearly-blush: #f7ddd8;
+  --dearly-plum: #7a536e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--dearly-paper);
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background:
+    radial-gradient(
+      circle at 20% 0%,
+      rgb(247 221 216 / 0.7),
+      transparent 36rem
+    ),
+    var(--dearly-paper);
+  color: var(--dearly-ink);
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
