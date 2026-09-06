@@ -4,9 +4,14 @@ import { PrismaService } from '../../../infrastructure/database/prisma.service.j
 import type {
   CreateLetterDraftRecord,
   LetterDraftRecord,
+  LetterPublishedRecord,
   UpdateLetterDraftRecord,
 } from '../domain/letter.js'
-import type { LetterRepository } from '../application/ports/letter-repository.js'
+import type {
+  LetterPublishingRepository,
+  LetterRepository,
+  PublishedLetterReader,
+} from '../application/ports/letter-repository.js'
 
 function asJsonObject(
   value: Prisma.JsonValue,
@@ -48,8 +53,43 @@ function toDraftRecord(letter: {
   }
 }
 
+function toPublishedRecord(letter: {
+  id: string
+  creatorId: string
+  title: string
+  status: LetterStatus
+  shareToken: string | null
+  templateSnapshot: Prisma.JsonValue
+  content: Prisma.JsonValue
+  createdAt: Date
+  updatedAt: Date
+}): LetterPublishedRecord {
+  if (letter.status !== LetterStatus.PUBLISHED || !letter.shareToken) {
+    throw new Error(
+      `Expected a published Letter with a Share token: ${letter.id}`,
+    )
+  }
+
+  return {
+    id: letter.id,
+    creatorId: letter.creatorId,
+    title: letter.title,
+    status: 'published',
+    shareToken: letter.shareToken,
+    template: asJsonObject(
+      letter.templateSnapshot,
+      'templateSnapshot',
+    ) as unknown as LetterPublishedRecord['template'],
+    content: asJsonObject(letter.content, 'content'),
+    createdAt: letter.createdAt,
+    updatedAt: letter.updatedAt,
+  }
+}
+
 @Injectable()
-export class PrismaLetterRepository implements LetterRepository {
+export class PrismaLetterRepository
+  implements LetterRepository, LetterPublishingRepository, PublishedLetterReader
+{
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async createDraft(
@@ -124,5 +164,74 @@ export class PrismaLetterRepository implements LetterRepository {
 
       return letter ? toDraftRecord(letter) : undefined
     })
+  }
+
+  async publishDraft(input: {
+    creatorId: string
+    letterId: string
+    shareToken: string
+  }): Promise<LetterPublishedRecord | undefined> {
+    return this.prisma.$transaction(async (transaction) => {
+      const alreadyPublished = await transaction.letter.findFirst({
+        where: {
+          id: input.letterId,
+          creatorId: input.creatorId,
+          status: LetterStatus.PUBLISHED,
+        },
+      })
+
+      if (alreadyPublished) {
+        return toPublishedRecord(alreadyPublished)
+      }
+
+      const result = await transaction.letter.updateMany({
+        where: {
+          id: input.letterId,
+          creatorId: input.creatorId,
+          status: LetterStatus.DRAFT,
+        },
+        data: {
+          status: LetterStatus.PUBLISHED,
+          shareToken: input.shareToken,
+        },
+      })
+
+      if (result.count === 0) {
+        const publishedAfterRace = await transaction.letter.findFirst({
+          where: {
+            id: input.letterId,
+            creatorId: input.creatorId,
+            status: LetterStatus.PUBLISHED,
+          },
+        })
+
+        return publishedAfterRace
+          ? toPublishedRecord(publishedAfterRace)
+          : undefined
+      }
+
+      const published = await transaction.letter.findFirst({
+        where: {
+          id: input.letterId,
+          creatorId: input.creatorId,
+          status: LetterStatus.PUBLISHED,
+        },
+      })
+
+      return published ? toPublishedRecord(published) : undefined
+    })
+  }
+
+  async findPublishedByShareToken(
+    shareToken: string,
+  ): Promise<LetterPublishedRecord | undefined> {
+    const letter = await this.prisma.letter.findFirst({
+      where: {
+        shareToken,
+        status: LetterStatus.PUBLISHED,
+      },
+    })
+
+    return letter ? toPublishedRecord(letter) : undefined
   }
 }

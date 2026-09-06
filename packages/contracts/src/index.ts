@@ -4,8 +4,14 @@ export {
 } from './auth/creator-profile'
 export {
   PublishedLetterSchema,
+  PublishedLetterElementSchema,
+  type PublishedLetterElement,
   type PublishedLetter,
 } from './letters/published-letter'
+export {
+  PublishLetterResponseSchema,
+  type PublishLetterResponse,
+} from './letters/publish-letter'
 export {
   CreateDraftInputSchema,
   type CreateDraftInput,

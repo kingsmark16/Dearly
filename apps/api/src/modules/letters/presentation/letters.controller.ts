@@ -16,10 +16,12 @@ import { VerifiedCreatorGuard } from '../../creator/guards/verified-creator.guar
 import { CreateLetterDraftUseCase } from '../application/create-letter-draft.use-case.js'
 import { GetCreatorLetterDraftUseCase } from '../application/get-creator-letter-draft.use-case.js'
 import { ListCreatorLettersUseCase } from '../application/list-creator-letters.use-case.js'
+import { PublishLetterUseCase } from '../application/publish-letter.use-case.js'
 import { UpdateLetterDraftUseCase } from '../application/update-letter-draft.use-case.js'
 import {
   LetterDraftNotFoundError,
   LetterDraftValidationError,
+  LetterPublishValidationError,
 } from '../domain/letter.js'
 import { CreateLetterDraftDto } from './dto/create-letter-draft.dto.js'
 import {
@@ -38,6 +40,8 @@ export class LettersController {
     private readonly getCreatorLetterDraftUseCase: GetCreatorLetterDraftUseCase,
     @Inject(ListCreatorLettersUseCase)
     private readonly listCreatorLettersUseCase: ListCreatorLettersUseCase,
+    @Inject(PublishLetterUseCase)
+    private readonly publishLetterUseCase: PublishLetterUseCase,
     @Inject(UpdateLetterDraftUseCase)
     private readonly updateLetterDraftUseCase: UpdateLetterDraftUseCase,
   ) {}
@@ -106,6 +110,34 @@ export class LettersController {
 
       return toCreatorLetterDraftResponse(letter)
     } catch (error: unknown) {
+      this.throwDraftError(error)
+    }
+  }
+
+  @Post(':id/publish')
+  async publishDraft(
+    @Session() session: UserSession,
+    @Param('id') letterId: string,
+  ) {
+    try {
+      const result = await this.publishLetterUseCase.execute({
+        creatorId: session.user.id,
+        letterId,
+      })
+
+      return {
+        id: result.letter.id,
+        status: result.letter.status,
+        shareUrl: result.shareUrl,
+      }
+    } catch (error: unknown) {
+      if (error instanceof LetterPublishValidationError) {
+        throw new BadRequestException({
+          message: error.message,
+          problems: error.problems,
+        })
+      }
+
       this.throwDraftError(error)
     }
   }

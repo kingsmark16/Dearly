@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import axios from 'axios'
 import { getPublishedLetter } from '../../../../src/features/letters/api/get-published-letter'
@@ -5,6 +6,13 @@ import { LetterViewer } from '../../../../src/features/letters/components/letter
 
 type LetterPageProps = {
   params: Promise<{ slug: string }>
+}
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
 }
 
 export default async function LetterPage({ params }: LetterPageProps) {

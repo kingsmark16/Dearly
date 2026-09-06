@@ -11,6 +11,18 @@ export type LetterDraftRecord = {
   updatedAt: Date
 }
 
+export type LetterPublishedRecord = {
+  id: string
+  creatorId: string
+  title: string
+  status: 'published'
+  template: CatalogTemplate
+  content: Record<string, unknown>
+  shareToken: string
+  createdAt: Date
+  updatedAt: Date
+}
+
 export type CreateLetterDraftRecord = {
   creatorId: string
   title: string
@@ -35,6 +47,19 @@ export class LetterDraftValidationError extends Error {
   constructor(message: string) {
     super(message)
     this.name = 'LetterDraftValidationError'
+  }
+}
+
+export type LetterPublishProblem = {
+  fieldId: string
+  fieldLabel: string
+  message: string
+}
+
+export class LetterPublishValidationError extends Error {
+  constructor(readonly problems: LetterPublishProblem[]) {
+    super('Letter cannot be published until the listed problems are fixed')
+    this.name = 'LetterPublishValidationError'
   }
 }
 

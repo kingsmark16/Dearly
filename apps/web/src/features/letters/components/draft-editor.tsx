@@ -14,6 +14,7 @@ import { useDeleteCreatorLetterMedia } from '../hooks/use-delete-creator-letter-
 import { useReorderCreatorLetterMedia } from '../hooks/use-reorder-creator-letter-media'
 import { useUploadCreatorLetterMedia } from '../hooks/use-upload-creator-letter-media'
 import { useUpdateCreatorLetterDraft } from '../hooks/use-update-creator-letter-draft'
+import { PublishLetterPanel } from './publish-letter-panel'
 
 type EditorState = {
   title: string
@@ -496,6 +497,11 @@ function DraftEditorForm({
           </Button>
         </div>
       ) : null}
+
+      <PublishLetterPanel
+        beforePublish={saveDraftIfNeeded}
+        letterId={letterId}
+      />
     </div>
   )
 }
