@@ -33,6 +33,14 @@ class RecordingLetterRepository implements LetterRepository {
   async listByCreator(): Promise<LetterDraftRecord[]> {
     return []
   }
+
+  async findDraftById(): Promise<LetterDraftRecord | undefined> {
+    return undefined
+  }
+
+  async updateDraft(): Promise<LetterDraftRecord | undefined> {
+    return undefined
+  }
 }
 
 describe('CreateLetterDraftUseCase', () => {

@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import axios from 'axios'
-import type { CreatorLetterDraft } from '@dearly/contracts'
 import { useCatalog } from '../../catalog/hooks/use-catalog'
 import { Button } from '@dearly/ui/button'
 import { authClient } from '../../auth/auth-client'
@@ -18,9 +18,6 @@ export function CreatorArea() {
   const catalogQuery = useCatalog()
   const lettersQuery = useCreatorLetters(Boolean(profileQuery.data))
   const createDraftMutation = useCreateLetterDraft()
-  const [createdDraft, setCreatedDraft] = useState<CreatorLetterDraft | null>(
-    null,
-  )
   const [selectedTemplateSlug, setSelectedTemplateSlug] = useState<
     string | null
   >(null)
@@ -51,8 +48,8 @@ export function CreatorArea() {
       { templateSlug },
       {
         onSuccess: (draft) => {
-          setCreatedDraft(draft)
           setSelectedTemplateSlug(null)
+          router.push(`/creator/letters/${draft.id}`)
         },
       },
     )
@@ -137,16 +134,6 @@ export function CreatorArea() {
             {createError}
           </p>
         ) : null}
-
-        {createdDraft ? (
-          <p
-            className="rounded-xl bg-[var(--dearly-blush)]/60 p-4 text-sm leading-6"
-            role="status"
-          >
-            Draft created: <strong>{createdDraft.title}</strong>. Your template
-            snapshot is saved safely. The editor is the next step.
-          </p>
-        ) : null}
       </section>
 
       <section className="space-y-4" aria-labelledby="your-drafts-heading">
@@ -175,7 +162,15 @@ export function CreatorArea() {
                 key={letter.id}
                 className="rounded-2xl border border-[var(--dearly-blush)] bg-white/70 p-4"
               >
-                <p className="font-semibold">{letter.title}</p>
+                <Link
+                  className="block rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--dearly-plum)]"
+                  href={`/creator/letters/${letter.id}`}
+                >
+                  <p className="font-semibold">{letter.title}</p>
+                  <p className="mt-1 text-sm font-semibold text-[var(--dearly-plum)]">
+                    Edit Draft
+                  </p>
+                </Link>
                 <p className="mt-1 text-sm text-[var(--dearly-muted)]">
                   {letter.template.category.name} · {letter.template.name}
                 </p>

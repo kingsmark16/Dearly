@@ -1,9 +1,12 @@
 import {
   Body,
+  BadRequestException,
   Controller,
   Get,
   Inject,
   NotFoundException,
+  Param,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common'
@@ -11,12 +14,19 @@ import { Session, type UserSession } from '@thallesp/nestjs-better-auth'
 import { CatalogTemplateNotFoundError } from '../../catalog/domain/template.js'
 import { VerifiedCreatorGuard } from '../../creator/guards/verified-creator.guard.js'
 import { CreateLetterDraftUseCase } from '../application/create-letter-draft.use-case.js'
+import { GetCreatorLetterDraftUseCase } from '../application/get-creator-letter-draft.use-case.js'
 import { ListCreatorLettersUseCase } from '../application/list-creator-letters.use-case.js'
+import { UpdateLetterDraftUseCase } from '../application/update-letter-draft.use-case.js'
+import {
+  LetterDraftNotFoundError,
+  LetterDraftValidationError,
+} from '../domain/letter.js'
 import { CreateLetterDraftDto } from './dto/create-letter-draft.dto.js'
 import {
   toCreatorLetterDraftResponse,
   toCreatorLetterSummaryResponse,
 } from './dto/creator-letter-response.dto.js'
+import { UpdateLetterDraftDto } from './dto/update-letter-draft.dto.js'
 
 @Controller('letters')
 @UseGuards(VerifiedCreatorGuard)
@@ -24,8 +34,12 @@ export class LettersController {
   constructor(
     @Inject(CreateLetterDraftUseCase)
     private readonly createLetterDraftUseCase: CreateLetterDraftUseCase,
+    @Inject(GetCreatorLetterDraftUseCase)
+    private readonly getCreatorLetterDraftUseCase: GetCreatorLetterDraftUseCase,
     @Inject(ListCreatorLettersUseCase)
     private readonly listCreatorLettersUseCase: ListCreatorLettersUseCase,
+    @Inject(UpdateLetterDraftUseCase)
+    private readonly updateLetterDraftUseCase: UpdateLetterDraftUseCase,
   ) {}
 
   @Get()
@@ -35,6 +49,23 @@ export class LettersController {
     )
 
     return letters.map(toCreatorLetterSummaryResponse)
+  }
+
+  @Get(':id')
+  async getDraft(
+    @Session() session: UserSession,
+    @Param('id') letterId: string,
+  ) {
+    try {
+      const letter = await this.getCreatorLetterDraftUseCase.execute(
+        session.user.id,
+        letterId,
+      )
+
+      return toCreatorLetterDraftResponse(letter)
+    } catch (error: unknown) {
+      this.throwDraftError(error)
+    }
   }
 
   @Post()
@@ -57,5 +88,37 @@ export class LettersController {
 
       throw error
     }
+  }
+
+  @Patch(':id')
+  async updateDraft(
+    @Session() session: UserSession,
+    @Param('id') letterId: string,
+    @Body() input: UpdateLetterDraftDto,
+  ) {
+    try {
+      const letter = await this.updateLetterDraftUseCase.execute({
+        creatorId: session.user.id,
+        letterId,
+        title: input.title,
+        content: input.content,
+      })
+
+      return toCreatorLetterDraftResponse(letter)
+    } catch (error: unknown) {
+      this.throwDraftError(error)
+    }
+  }
+
+  private throwDraftError(error: unknown): never {
+    if (error instanceof LetterDraftNotFoundError) {
+      throw new NotFoundException('Letter Draft not found')
+    }
+
+    if (error instanceof LetterDraftValidationError) {
+      throw new BadRequestException(error.message)
+    }
+
+    throw error
   }
 }

@@ -11,6 +11,10 @@ export {
   type CreateDraftInput,
 } from './letters/create-draft'
 export {
+  UpdateDraftInputSchema,
+  type UpdateDraftInput,
+} from './letters/update-draft'
+export {
   CreatorLetterDraftSchema,
   CreatorLetterListSchema,
   CreatorLetterSummarySchema,

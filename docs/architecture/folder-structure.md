@@ -81,7 +81,9 @@ apps/api/src/
         letter.ts
       application/
         create-letter-draft.use-case.ts
+        get-creator-letter-draft.use-case.ts
         list-creator-letters.use-case.ts
+        update-letter-draft.use-case.ts
         ports/
           letter-repository.ts
       presentation/
@@ -89,6 +91,7 @@ apps/api/src/
         dto/
           create-letter-draft.dto.ts
           creator-letter-response.dto.ts
+          update-letter-draft.dto.ts
       infrastructure/
         prisma-letter.repository.ts
       public/
@@ -278,6 +281,7 @@ apps/web/app/
     sign-up/page.tsx
   (creator)/
     creator/page.tsx
+    creator/letters/[id]/page.tsx
   layout.tsx
   globals.css
   error.tsx
@@ -305,9 +309,18 @@ apps/web/src/
       hooks/
     letters/
       api/
+        create-letter-draft.ts
+        get-creator-letter-draft.ts
+        get-creator-letters.ts
+        update-creator-letter-draft.ts
       components/
+        draft-editor.tsx
         elements/
       hooks/
+        use-creator-letter.ts
+        use-creator-letters.ts
+        use-create-letter-draft.ts
+        use-update-creator-letter-draft.ts
     media/
       api/
       components/
@@ -386,16 +399,13 @@ In practice:
 
 ## Implementation order
 
-The catalog and initial Creator Draft slice are implemented. The next slices
-should extend the existing seams in this order:
+The catalog, initial Creator Draft slice, and text Draft editor are
+implemented. The next slices should extend the existing seams in this order:
 
-1. Add the Draft editor using the selected Template's typed Fields and
-   Elements.
-2. Add `PATCH /letters/:id` with ownership checks and debounced autosave.
-3. Add media upload orchestration through private Cloudflare R2 objects.
-4. Add publish validation, immutable Template snapshot handling, and the
+1. Add media upload orchestration through private Cloudflare R2 objects.
+2. Add publish validation, immutable Template snapshot handling, and the
    public Share link/QR code flow.
-5. Add archive/trash lifecycle actions and retention cleanup.
+3. Add archive/trash lifecycle actions and retention cleanup.
 
 This order keeps the catalog reusable and prevents the editor from becoming a
 large component that hardcodes every occasion and Template.

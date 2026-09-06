@@ -4,6 +4,7 @@ import { PrismaService } from '../../../infrastructure/database/prisma.service.j
 import type {
   CreateLetterDraftRecord,
   LetterDraftRecord,
+  UpdateLetterDraftRecord,
 } from '../domain/letter.js'
 import type { LetterRepository } from '../application/ports/letter-repository.js'
 
@@ -76,5 +77,52 @@ export class PrismaLetterRepository implements LetterRepository {
     })
 
     return letters.map(toDraftRecord)
+  }
+
+  async findDraftById(
+    creatorId: string,
+    letterId: string,
+  ): Promise<LetterDraftRecord | undefined> {
+    const letter = await this.prisma.letter.findFirst({
+      where: {
+        id: letterId,
+        creatorId,
+        status: LetterStatus.DRAFT,
+      },
+    })
+
+    return letter ? toDraftRecord(letter) : undefined
+  }
+
+  async updateDraft(
+    input: UpdateLetterDraftRecord,
+  ): Promise<LetterDraftRecord | undefined> {
+    return this.prisma.$transaction(async (transaction) => {
+      const result = await transaction.letter.updateMany({
+        where: {
+          id: input.letterId,
+          creatorId: input.creatorId,
+          status: LetterStatus.DRAFT,
+        },
+        data: {
+          title: input.title,
+          content: input.content as Prisma.InputJsonObject,
+        },
+      })
+
+      if (result.count === 0) {
+        return undefined
+      }
+
+      const letter = await transaction.letter.findFirst({
+        where: {
+          id: input.letterId,
+          creatorId: input.creatorId,
+          status: LetterStatus.DRAFT,
+        },
+      })
+
+      return letter ? toDraftRecord(letter) : undefined
+    })
   }
 }

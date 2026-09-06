@@ -45,7 +45,7 @@ The boundary rules are:
   responses are parsed again at the web boundary before rendering.
 - Axios is used through a small API client rather than called from individual
   components. TanStack Query owns client-side server-state caching for the
-  Creator dashboard now and will also own editor interactions.
+  Creator dashboard and editor interactions.
 - GSAP is isolated to client-only interactive elements. Core content remains
   readable without animation; v1 follows the product decision not to expose a
   reduced-motion setting.
