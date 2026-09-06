@@ -3,54 +3,75 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import axios from 'axios'
+import type { CreatorLetterDraft } from '@dearly/contracts'
+import { useCatalog } from '../../catalog/hooks/use-catalog'
 import { Button } from '@dearly/ui/button'
 import { authClient } from '../../auth/auth-client'
-import { getCreatorProfile } from '../api/get-creator-profile'
+import { useCreatorProfile } from '../hooks/use-creator-profile'
+import { CreatorTemplatePicker } from './creator-template-picker'
+import { useCreateLetterDraft } from '../../letters/hooks/use-create-letter-draft'
+import { useCreatorLetters } from '../../letters/hooks/use-creator-letters'
 
 export function CreatorArea() {
   const router = useRouter()
-  const [creatorName, setCreatorName] = useState('')
-  const [creatorEmail, setCreatorEmail] = useState('')
-  const [isLoading, setIsLoading] = useState(true)
+  const profileQuery = useCreatorProfile()
+  const catalogQuery = useCatalog()
+  const lettersQuery = useCreatorLetters(Boolean(profileQuery.data))
+  const createDraftMutation = useCreateLetterDraft()
+  const [createdDraft, setCreatedDraft] = useState<CreatorLetterDraft | null>(
+    null,
+  )
+  const [selectedTemplateSlug, setSelectedTemplateSlug] = useState<
+    string | null
+  >(null)
   const [isSigningOut, setIsSigningOut] = useState(false)
 
   useEffect(() => {
-    let isMounted = true
-
-    getCreatorProfile()
-      .then(({ creator }) => {
-        if (!isMounted) return
-        setCreatorName(creator.name)
-        setCreatorEmail(creator.email)
-        setIsLoading(false)
-      })
-      .catch((error: unknown) => {
-        if (!isMounted) return
-        if (axios.isAxiosError(error) && error.response?.status === 401) {
-          router.replace('/sign-in')
-          return
-        }
-        setIsLoading(false)
-      })
-
-    return () => {
-      isMounted = false
+    if (
+      axios.isAxiosError(profileQuery.error) &&
+      profileQuery.error.response?.status === 401
+    ) {
+      router.replace('/sign-in')
     }
-  }, [router])
+  }, [profileQuery.error, router])
 
   async function handleSignOut() {
     setIsSigningOut(true)
-    await authClient.signOut()
-    router.replace('/sign-in')
+    try {
+      await authClient.signOut()
+      router.replace('/sign-in')
+    } finally {
+      setIsSigningOut(false)
+    }
   }
 
-  if (isLoading) {
+  function handleCreateDraft(templateSlug: string) {
+    setSelectedTemplateSlug(templateSlug)
+    createDraftMutation.mutate(
+      { templateSlug },
+      {
+        onSuccess: (draft) => {
+          setCreatedDraft(draft)
+          setSelectedTemplateSlug(null)
+        },
+      },
+    )
+  }
+
+  if (profileQuery.isLoading) {
     return (
       <p className="text-[var(--dearly-muted)]">Loading your Creator area…</p>
     )
   }
 
-  if (!creatorEmail) {
+  if (
+    axios.isAxiosError(profileQuery.error) &&
+    profileQuery.error.response?.status === 401
+  ) {
+    return null
+  }
+
+  if (profileQuery.isError || !profileQuery.data) {
     return (
       <p
         className="rounded-xl bg-red-50 p-4 text-sm leading-6 text-red-800"
@@ -61,19 +82,113 @@ export function CreatorArea() {
     )
   }
 
+  const creator = profileQuery.data.creator
+  const createError =
+    axios.isAxiosError(createDraftMutation.error) &&
+    createDraftMutation.error.response?.status === 404
+      ? 'That template is no longer available. Please refresh and try again.'
+      : 'We could not create the Draft. Please try again.'
+
   return (
     <div className="space-y-8">
       <div className="rounded-2xl bg-[var(--dearly-blush)]/60 p-5">
         <p className="text-sm uppercase tracking-[0.2em] text-[var(--dearly-plum)]">
           Verified Creator
         </p>
-        <h2 className="mt-3 text-3xl">Welcome, {creatorName}</h2>
-        <p className="mt-2 text-[var(--dearly-muted)]">{creatorEmail}</p>
+        <h2 className="mt-3 text-3xl">Welcome, {creator.name}</h2>
+        <p className="mt-2 text-[var(--dearly-muted)]">{creator.email}</p>
       </div>
-      <p className="leading-7 text-[var(--dearly-muted)]">
-        Your Creator workspace is ready. The next slice will let you create a
-        Draft letter from a category and template.
-      </p>
+
+      <section className="space-y-5" aria-labelledby="choose-template-heading">
+        <div>
+          <h2 id="choose-template-heading" className="text-3xl">
+            Choose a template
+          </h2>
+          <p className="mt-2 leading-7 text-[var(--dearly-muted)]">
+            Start a Draft from a Dearly template. You can personalize its Fields
+            and Elements in the editor next.
+          </p>
+        </div>
+
+        {catalogQuery.isLoading ? (
+          <p className="text-[var(--dearly-muted)]">Loading templates…</p>
+        ) : catalogQuery.isError || !catalogQuery.data ? (
+          <p
+            className="rounded-xl bg-red-50 p-4 text-sm leading-6 text-red-800"
+            role="alert"
+          >
+            We could not load the template library. Please try again.
+          </p>
+        ) : (
+          <CreatorTemplatePicker
+            categories={catalogQuery.data.categories}
+            isCreating={createDraftMutation.isPending}
+            onSelect={handleCreateDraft}
+            selectedTemplateSlug={selectedTemplateSlug}
+            templates={catalogQuery.data.templates}
+          />
+        )}
+
+        {createDraftMutation.isError ? (
+          <p
+            className="rounded-xl bg-red-50 p-4 text-sm leading-6 text-red-800"
+            role="alert"
+          >
+            {createError}
+          </p>
+        ) : null}
+
+        {createdDraft ? (
+          <p
+            className="rounded-xl bg-[var(--dearly-blush)]/60 p-4 text-sm leading-6"
+            role="status"
+          >
+            Draft created: <strong>{createdDraft.title}</strong>. Your template
+            snapshot is saved safely. The editor is the next step.
+          </p>
+        ) : null}
+      </section>
+
+      <section className="space-y-4" aria-labelledby="your-drafts-heading">
+        <div>
+          <h2 id="your-drafts-heading" className="text-3xl">
+            Your Drafts
+          </h2>
+          <p className="mt-2 text-[var(--dearly-muted)]">
+            Drafts are private and cannot be opened through a Share link.
+          </p>
+        </div>
+
+        {lettersQuery.isLoading ? (
+          <p className="text-[var(--dearly-muted)]">Loading your Drafts…</p>
+        ) : lettersQuery.isError ? (
+          <p
+            className="rounded-xl bg-red-50 p-4 text-sm leading-6 text-red-800"
+            role="alert"
+          >
+            We could not load your Drafts. Please try again.
+          </p>
+        ) : lettersQuery.data && lettersQuery.data.length > 0 ? (
+          <ul className="space-y-3" aria-label="Your saved drafts">
+            {lettersQuery.data.map((letter) => (
+              <li
+                key={letter.id}
+                className="rounded-2xl border border-[var(--dearly-blush)] bg-white/70 p-4"
+              >
+                <p className="font-semibold">{letter.title}</p>
+                <p className="mt-1 text-sm text-[var(--dearly-muted)]">
+                  {letter.template.category.name} · {letter.template.name}
+                </p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="rounded-2xl border border-dashed border-[var(--dearly-blush)] p-5 text-[var(--dearly-muted)]">
+            You do not have any Drafts yet.
+          </p>
+        )}
+      </section>
+
       <Button disabled={isSigningOut} onClick={handleSignOut} type="button">
         {isSigningOut ? 'Signing out…' : 'Sign out'}
       </Button>

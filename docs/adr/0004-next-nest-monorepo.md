@@ -44,8 +44,8 @@ The boundary rules are:
   rendering. The API maps domain data to an allowlisted public view model, and
   responses are parsed again at the web boundary before rendering.
 - Axios is used through a small API client rather than called from individual
-  components. TanStack Query will own client-side server-state caching when
-  editor/dashboard interactions are introduced.
+  components. TanStack Query owns client-side server-state caching for the
+  Creator dashboard now and will also own editor interactions.
 - GSAP is isolated to client-only interactive elements. Core content remains
   readable without animation; v1 follows the product decision not to expose a
   reduced-motion setting.
@@ -83,8 +83,9 @@ Positive consequences:
 Costs and constraints:
 
 - Developers must understand workspace filters and the web/API boundary.
-- The first public-letter adapter is intentionally in-memory and must be
-  replaced by the Prisma repository in the persistence ticket.
+- The public seeded-Letter adapter is intentionally in-memory. Creator Letter
+  Draft persistence is Prisma-backed; later publish and lifecycle behavior will
+  extend that repository without changing the platform boundary.
 - ESM adds explicit import-suffix rules to the Nest codebase.
 - Docker and Nginx configuration must keep the internal service names and
   public routes aligned.

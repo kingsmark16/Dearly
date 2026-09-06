@@ -58,6 +58,19 @@ test('Creator must verify email before using the protected area', async ({
   ).toBeVisible()
   await expect(page.getByText(email)).toBeVisible()
 
+  await expect(
+    page.getByRole('heading', { name: 'Choose a template' }),
+  ).toBeVisible()
+  await page
+    .getByRole('button', { name: 'Create draft with Our Story' })
+    .click()
+  await expect(page.getByRole('status')).toContainText(
+    'Draft created: Our Story',
+  )
+  await expect(
+    page.getByRole('list', { name: 'Your saved drafts' }),
+  ).toContainText('Our Story')
+
   await page.getByRole('button', { name: 'Sign out' }).click()
   await expect(page).toHaveURL(/\/sign-in$/)
   await page.goto('/creator')

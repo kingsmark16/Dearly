@@ -17,5 +17,6 @@ import { CatalogController } from './presentation/catalog.controller.js'
     ListTemplatesUseCase,
     GetTemplateUseCase,
   ],
+  exports: [CATALOG_REPOSITORY],
 })
 export class CatalogModule {}
