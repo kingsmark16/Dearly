@@ -4,12 +4,18 @@ import { CatalogModule } from '../catalog/catalog.module.js'
 import { CreateLetterDraftUseCase } from './application/create-letter-draft.use-case.js'
 import { GetCreatorLetterDraftUseCase } from './application/get-creator-letter-draft.use-case.js'
 import { ListCreatorLettersUseCase } from './application/list-creator-letters.use-case.js'
-import { LETTER_REPOSITORY } from './application/ports/letter-repository.js'
+import { PublishLetterUseCase } from './application/publish-letter.use-case.js'
+import {
+  LETTER_PUBLISHING_REPOSITORY,
+  LETTER_REPOSITORY,
+  PUBLISHED_LETTER_READER,
+} from './application/ports/letter-repository.js'
 import { UpdateLetterDraftUseCase } from './application/update-letter-draft.use-case.js'
 import { PrismaLetterRepository } from './infrastructure/prisma-letter.repository.js'
 import { LettersController } from './presentation/letters.controller.js'
 import { PublicLettersController } from './public/public-letters.controller.js'
 import { PublicLettersService } from './public/public-letters.service.js'
+import { GetPublicLetterUseCase } from './public/get-public-letter.use-case.js'
 import { CompleteMediaUploadUseCase } from './media/application/complete-media-upload.use-case.js'
 import { CreateMediaUploadIntentUseCase } from './media/application/create-media-upload-intent.use-case.js'
 import { DeleteMediaAssetUseCase } from './media/application/delete-media-asset.use-case.js'
@@ -36,14 +42,24 @@ import { LocalMediaStorageController } from './media/presentation/local-media-st
   ],
   providers: [
     PublicLettersService,
+    PrismaLetterRepository,
     {
       provide: LETTER_REPOSITORY,
-      useClass: PrismaLetterRepository,
+      useExisting: PrismaLetterRepository,
+    },
+    {
+      provide: LETTER_PUBLISHING_REPOSITORY,
+      useExisting: PrismaLetterRepository,
+    },
+    {
+      provide: PUBLISHED_LETTER_READER,
+      useExisting: PrismaLetterRepository,
     },
     CreateLetterDraftUseCase,
     GetCreatorLetterDraftUseCase,
     ListCreatorLettersUseCase,
     UpdateLetterDraftUseCase,
+    PublishLetterUseCase,
     {
       provide: MEDIA_ASSET_REPOSITORY,
       useClass: PrismaMediaAssetRepository,
@@ -76,6 +92,7 @@ import { LocalMediaStorageController } from './media/presentation/local-media-st
     DeleteMediaAssetUseCase,
     GetCreatorLetterMediaUseCase,
     ReorderMediaGalleryUseCase,
+    GetPublicLetterUseCase,
   ],
 })
 export class LettersModule {}

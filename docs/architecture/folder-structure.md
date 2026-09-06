@@ -422,12 +422,11 @@ In practice:
 
 ## Implementation order
 
-The catalog, Creator Draft slice, text/media editor, and Creator Draft preview
-are implemented. The next slices should extend the existing seams in this order:
+The catalog, Creator Draft slice, text/media editor, Creator Draft preview, and
+publish/share flow are implemented. The next slices should extend the existing
+seams in this order:
 
-1. Add publish validation, immutable Template snapshot handling, and the
-   public Share link/QR code flow.
-2. Add archive/trash lifecycle actions and retention cleanup.
+1. Add archive/trash lifecycle actions and retention cleanup.
 
 This order keeps the catalog reusable and prevents the editor from becoming a
 large component that hardcodes every occasion and Template.

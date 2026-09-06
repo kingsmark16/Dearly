@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common'
+import { Inject, Injectable, Optional } from '@nestjs/common'
 import type { PublishedLetter } from '@dearly/contracts/letters/published-letter'
+import { GetPublicLetterUseCase } from './get-public-letter.use-case.js'
 
 type SeededLetter = {
   slug: string
@@ -7,7 +8,7 @@ type SeededLetter = {
   templateName: string
   title: string
   opening: PublishedLetter['opening']
-  elements: PublishedLetter['elements']
+  elements: Extract<PublishedLetter['elements'][number], { type: 'text' }>[]
 }
 
 const seededLetter: SeededLetter = {
@@ -59,9 +60,27 @@ function toPublicLetterViewModel(letter: SeededLetter): PublishedLetter {
 
 @Injectable()
 export class PublicLettersService {
+  constructor(
+    @Optional()
+    @Inject(GetPublicLetterUseCase)
+    private readonly getPublicLetterUseCase?: GetPublicLetterUseCase,
+  ) {}
+
   findBySlug(slug: string): PublishedLetter | undefined {
     return slug === seededLetter.slug
       ? toPublicLetterViewModel(seededLetter)
       : undefined
+  }
+
+  async findBySlugOrShareToken(
+    slugOrShareToken: string,
+  ): Promise<PublishedLetter | undefined> {
+    const seededLetterView = this.findBySlug(slugOrShareToken)
+
+    if (seededLetterView) {
+      return seededLetterView
+    }
+
+    return this.getPublicLetterUseCase?.execute(slugOrShareToken)
   }
 }

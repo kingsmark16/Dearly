@@ -17,8 +17,8 @@ export class PublicLettersController {
   ) {}
 
   @Get(':slug')
-  getPublishedLetter(@Param('slug') slug: string) {
-    const letter = this.publicLettersService.findBySlug(slug)
+  async getPublishedLetter(@Param('slug') slug: string) {
+    const letter = await this.publicLettersService.findBySlugOrShareToken(slug)
 
     if (!letter) {
       throw new NotFoundException('Published letter not found')

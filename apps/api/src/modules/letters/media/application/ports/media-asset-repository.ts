@@ -5,6 +5,13 @@ import type {
 
 export const MEDIA_ASSET_REPOSITORY = Symbol('MEDIA_ASSET_REPOSITORY')
 
+export interface MediaAssetReader {
+  listForCreator(
+    creatorId: string,
+    letterId: string,
+  ): Promise<MediaAssetRecord[]>
+}
+
 export interface MediaAssetIntentRepository {
   countActiveByField(
     letterId: string,
