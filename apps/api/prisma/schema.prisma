@@ -14,6 +14,16 @@ enum LetterStatus {
   TRASHED
 }
 
+enum MediaAssetKind {
+  PHOTO
+  AUDIO
+}
+
+enum MediaAssetStatus {
+  PENDING
+  READY
+}
+
 // Better Auth owns these four models. Dearly's Creator profile and letter
 // ownership is represented by the Letter relation below.
 model User {
@@ -91,7 +101,28 @@ model Letter {
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
   creator          User         @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  mediaAssets      MediaAsset[]
 
   @@index([creatorId, status, updatedAt])
   @@map("letter")
+}
+
+model MediaAsset {
+  id                String          @id
+  letterId          String
+  fieldId           String          @db.VarChar(120)
+  kind              MediaAssetKind
+  status            MediaAssetStatus @default(PENDING)
+  objectKey         String          @unique @db.VarChar(512)
+  originalFileName  String          @db.VarChar(255)
+  contentType       String          @db.VarChar(128)
+  byteSize          Int
+  durationSeconds   Float?
+  uploadExpiresAt   DateTime
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  letter            Letter          @relation(fields: [letterId], references: [id], onDelete: Cascade)
+
+  @@index([letterId, fieldId, status, uploadExpiresAt])
+  @@map("media_asset")
 }

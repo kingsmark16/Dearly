@@ -38,7 +38,11 @@ export class UpdateLetterDraftUseCase {
       creatorId: command.creatorId,
       letterId: command.letterId,
       title: validateLetterDraftTitle(command.title),
-      content: validateLetterDraftContent(draft.template, command.content),
+      content: validateLetterDraftContent(
+        draft.template,
+        command.content,
+        draft.content,
+      ),
     })
 
     if (!updatedDraft) {

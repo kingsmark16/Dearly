@@ -11,6 +11,12 @@ const productionEnvironment = {
   SMTP_HOST: 'smtp.example.com',
   SMTP_PORT: 587,
   SMTP_FROM: 'noreply@dearly.dev',
+  AUTH_RATE_LIMIT_ENABLED: true,
+  MEDIA_STORAGE_DRIVER: 'r2',
+  R2_ACCOUNT_ID: 'account-id',
+  R2_ACCESS_KEY_ID: 'access-key',
+  R2_SECRET_ACCESS_KEY: 'secret-key',
+  R2_BUCKET_NAME: 'dearly-media',
 }
 
 describe('validateEnvironment', () => {
@@ -36,5 +42,14 @@ describe('validateEnvironment', () => {
         WEB_ORIGIN: 'http://dearly.example',
       }),
     ).toThrow('WEB_ORIGIN must contain only explicit HTTPS origins')
+  })
+
+  it('rejects disabled authentication rate limiting in production', () => {
+    expect(() =>
+      validateEnvironment({
+        ...productionEnvironment,
+        AUTH_RATE_LIMIT_ENABLED: false,
+      }),
+    ).toThrow('AUTH_RATE_LIMIT_ENABLED must be true in production')
   })
 })

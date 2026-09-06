@@ -1,12 +1,18 @@
 'use client'
 
 import type { CreatorLetterDraft } from '@dearly/contracts'
+import type { CreatorMediaAsset } from '@dearly/contracts/letters/media'
 import axios from 'axios'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '@dearly/ui/button'
+import { MediaFieldEditor } from './media-field-editor'
 import { useCreatorLetter } from '../hooks/use-creator-letter'
+import { useCreatorLetterMedia } from '../hooks/use-creator-letter-media'
+import { useDeleteCreatorLetterMedia } from '../hooks/use-delete-creator-letter-media'
+import { useReorderCreatorLetterMedia } from '../hooks/use-reorder-creator-letter-media'
+import { useUploadCreatorLetterMedia } from '../hooks/use-upload-creator-letter-media'
 import { useUpdateCreatorLetterDraft } from '../hooks/use-update-creator-letter-draft'
 
 type EditorState = {
@@ -42,23 +48,99 @@ function serializeEditorState(state: EditorState) {
   return JSON.stringify(state)
 }
 
+function updateMediaContent(
+  draft: CreatorLetterDraft,
+  content: Record<string, unknown>,
+  asset: CreatorMediaAsset,
+) {
+  const field = draft.template.definition.fields.find(
+    (candidate) => candidate.id === asset.fieldId,
+  )
+  const nextContent = { ...content }
+
+  if (field?.type === 'photo-gallery') {
+    const currentValue = content[asset.fieldId]
+    const assetIds = Array.isArray(currentValue)
+      ? currentValue.filter(
+          (value): value is string => typeof value === 'string',
+        )
+      : []
+
+    if (!assetIds.includes(asset.id)) {
+      assetIds.push(asset.id)
+    }
+
+    nextContent[asset.fieldId] = assetIds
+  } else {
+    nextContent[asset.fieldId] = asset.id
+  }
+
+  return nextContent
+}
+
+function removeMediaContent(
+  content: Record<string, unknown>,
+  asset: CreatorMediaAsset,
+) {
+  const nextContent = { ...content }
+  const currentValue = content[asset.fieldId]
+
+  if (Array.isArray(currentValue)) {
+    const assetIds = currentValue.filter(
+      (value): value is string =>
+        typeof value === 'string' && value !== asset.id,
+    )
+
+    if (assetIds.length > 0) {
+      nextContent[asset.fieldId] = assetIds
+    } else {
+      delete nextContent[asset.fieldId]
+    }
+  } else if (currentValue === asset.id) {
+    delete nextContent[asset.fieldId]
+  }
+
+  return nextContent
+}
+
+function setMediaOrder(
+  content: Record<string, unknown>,
+  fieldId: string,
+  assetIds: string[],
+) {
+  return { ...content, [fieldId]: [...assetIds] }
+}
+
+function getApiErrorMessage(error: unknown, fallback: string) {
+  if (axios.isAxiosError(error)) {
+    const message = error.response?.data?.message
+
+    if (typeof message === 'string') {
+      return message
+    }
+  }
+
+  return error instanceof Error ? error.message : fallback
+}
+
 export function DraftEditor({ letterId }: { letterId: string }) {
   const router = useRouter()
   const draftQuery = useCreatorLetter(letterId)
-
-  useEffect(() => {
-    if (
-      axios.isAxiosError(draftQuery.error) &&
-      draftQuery.error.response?.status === 401
-    ) {
-      router.replace('/sign-in')
-    }
-  }, [draftQuery.error, router])
-
-  if (
+  const mediaQuery = useCreatorLetterMedia(letterId)
+  const draftUnauthorized =
     axios.isAxiosError(draftQuery.error) &&
     draftQuery.error.response?.status === 401
-  ) {
+  const mediaUnauthorized =
+    axios.isAxiosError(mediaQuery.error) &&
+    mediaQuery.error.response?.status === 401
+
+  useEffect(() => {
+    if (draftUnauthorized || mediaUnauthorized) {
+      router.replace('/sign-in')
+    }
+  }, [draftUnauthorized, mediaUnauthorized, router])
+
+  if (draftUnauthorized || mediaUnauthorized) {
     return null
   }
 
@@ -81,6 +163,15 @@ export function DraftEditor({ letterId }: { letterId: string }) {
     <DraftEditorForm
       key={letterId}
       draft={draftQuery.data}
+      mediaAssets={mediaQuery.data ?? []}
+      mediaError={
+        mediaQuery.isError
+          ? getApiErrorMessage(
+              mediaQuery.error,
+              'We could not load your media files.',
+            )
+          : null
+      }
       letterId={letterId}
     />
   )
@@ -88,41 +179,57 @@ export function DraftEditor({ letterId }: { letterId: string }) {
 
 function DraftEditorForm({
   draft,
+  mediaAssets,
+  mediaError,
   letterId,
 }: {
   draft: CreatorLetterDraft
+  mediaAssets: CreatorMediaAsset[]
+  mediaError: string | null
   letterId: string
 }) {
   const initialEditorState = createEditorState(draft)
   const [editorState, setEditorState] = useState(initialEditorState)
   const [saveState, setSaveState] = useState<SaveState>('saved')
   const savedSnapshotRef = useRef(serializeEditorState(initialEditorState))
+  const editorStateRef = useRef(initialEditorState)
   const updateDraftMutation = useUpdateCreatorLetterDraft(letterId)
-  const updateDraft = updateDraftMutation.mutate
+  const uploadMediaMutation = useUploadCreatorLetterMedia(letterId)
+  const deleteMediaMutation = useDeleteCreatorLetterMedia(letterId)
+  const reorderMediaMutation = useReorderCreatorLetterMedia(letterId)
+  const updateDraft = updateDraftMutation.mutateAsync
 
   const serializedState = serializeEditorState(editorState)
 
   const saveDraft = useCallback(
-    (state: EditorState, snapshot: string) => {
+    async (state: EditorState, snapshot: string) => {
       setSaveState('saving')
-      updateDraft(
-        {
+
+      try {
+        await updateDraft({
           title: state.title,
           content: state.content,
-        },
-        {
-          onSuccess: () => {
-            savedSnapshotRef.current = snapshot
-            setSaveState('saved')
-          },
-          onError: () => {
-            setSaveState('error')
-          },
-        },
-      )
+        })
+        savedSnapshotRef.current = snapshot
+        setSaveState('saved')
+      } catch (error: unknown) {
+        setSaveState('error')
+        throw error
+      }
     },
     [updateDraft],
   )
+
+  const saveDraftIfNeeded = useCallback(async () => {
+    const currentState = editorStateRef.current
+    const snapshot = serializeEditorState(currentState)
+
+    if (snapshot === savedSnapshotRef.current) {
+      return
+    }
+
+    await saveDraft(currentState, snapshot)
+  }, [saveDraft])
 
   useEffect(() => {
     if (serializedState === savedSnapshotRef.current) {
@@ -130,23 +237,90 @@ function DraftEditorForm({
     }
 
     const timeoutId = window.setTimeout(() => {
-      saveDraft(editorState, serializedState)
+      void saveDraft(editorState, serializedState).catch(() => undefined)
     }, 700)
 
     return () => window.clearTimeout(timeoutId)
   }, [editorState, saveDraft, serializedState])
 
   function updateTitle(title: string) {
-    setEditorState((current) => ({ ...current, title }))
+    const nextState = { ...editorStateRef.current, title }
+    editorStateRef.current = nextState
+    setEditorState(nextState)
   }
 
   function updateField(fieldId: string, value: string) {
-    setEditorState((current) => ({
-      ...current,
-      content: { ...current.content, [fieldId]: value },
-    }))
+    const nextState = {
+      ...editorStateRef.current,
+      content: { ...editorStateRef.current.content, [fieldId]: value },
+    }
+    editorStateRef.current = nextState
+    setEditorState(nextState)
   }
 
+  async function handleMediaUpload(
+    fieldId: string,
+    file: File,
+    durationSeconds?: number,
+  ) {
+    await saveDraftIfNeeded()
+    const asset = await uploadMediaMutation.mutateAsync({
+      fieldId,
+      file,
+      durationSeconds,
+    })
+    const currentState = editorStateRef.current
+    const nextState = {
+      ...currentState,
+      content: updateMediaContent(draft, currentState.content, asset),
+    }
+
+    savedSnapshotRef.current = serializeEditorState(nextState)
+    editorStateRef.current = nextState
+    setEditorState(nextState)
+    setSaveState('saved')
+  }
+
+  async function handleMediaDelete(assetId: string) {
+    await saveDraftIfNeeded()
+    const asset = mediaAssets.find((candidate) => candidate.id === assetId)
+
+    if (!asset) {
+      return
+    }
+
+    await deleteMediaMutation.mutateAsync(assetId)
+    const currentState = editorStateRef.current
+    const nextState = {
+      ...currentState,
+      content: removeMediaContent(currentState.content, asset),
+    }
+
+    savedSnapshotRef.current = serializeEditorState(nextState)
+    editorStateRef.current = nextState
+    setEditorState(nextState)
+    setSaveState('saved')
+  }
+
+  async function handleMediaReorder(fieldId: string, assetIds: string[]) {
+    await saveDraftIfNeeded()
+    await reorderMediaMutation.mutateAsync({ fieldId, assetIds })
+    const currentState = editorStateRef.current
+    const nextState = {
+      ...currentState,
+      content: setMediaOrder(currentState.content, fieldId, assetIds),
+    }
+
+    savedSnapshotRef.current = serializeEditorState(nextState)
+    editorStateRef.current = nextState
+    setEditorState(nextState)
+    setSaveState('saved')
+  }
+
+  const mediaBusy =
+    uploadMediaMutation.isPending ||
+    deleteMediaMutation.isPending ||
+    reorderMediaMutation.isPending
   const saveLabel =
     saveState === 'saving'
       ? 'Saving…'
@@ -207,26 +381,42 @@ function DraftEditorForm({
             Personalize your Letter
           </h2>
           <p className="mt-2 leading-7 text-[var(--dearly-muted)]">
-            Fill the text Fields now. Required Fields will be checked before
-            publishing.
+            Fill the text and media Fields now. Required Fields will be checked
+            before publishing.
           </p>
         </div>
+
+        {mediaError ? (
+          <p
+            className="rounded-xl bg-red-50 p-4 text-sm leading-6 text-red-800"
+            role="alert"
+          >
+            {mediaError}
+          </p>
+        ) : null}
 
         <div className="space-y-5">
           {draft.template.definition.fields.map((field) => {
             if (!isEditableField(field)) {
-              return (
-                <div
-                  key={field.id}
-                  className="rounded-2xl border border-dashed border-[var(--dearly-blush)] p-5"
-                  role="note"
-                >
-                  <p className="font-semibold">{field.label}</p>
-                  <p className="mt-2 text-sm leading-6 text-[var(--dearly-muted)]">
-                    This media Field will be available in the next editor step.
-                  </p>
-                </div>
-              )
+              if (
+                field.type === 'photo' ||
+                field.type === 'photo-gallery' ||
+                field.type === 'audio'
+              ) {
+                return (
+                  <MediaFieldEditor
+                    key={field.id}
+                    field={field}
+                    assets={mediaAssets}
+                    busy={mediaBusy}
+                    onUpload={handleMediaUpload}
+                    onDelete={handleMediaDelete}
+                    onReorder={handleMediaReorder}
+                  />
+                )
+              }
+
+              return null
             }
 
             const descriptionId = `${field.id}-description`
@@ -286,7 +476,11 @@ function DraftEditorForm({
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl bg-red-50 p-4 text-sm leading-6 text-red-800">
           <p>We could not save your latest changes.</p>
           <Button
-            onClick={() => saveDraft(editorState, serializedState)}
+            onClick={() =>
+              void saveDraft(editorStateRef.current, serializedState).catch(
+                () => undefined,
+              )
+            }
             type="button"
             variant="ghost"
           >

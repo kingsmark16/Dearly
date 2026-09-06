@@ -128,7 +128,7 @@ describe('UpdateLetterDraftUseCase', () => {
     expect(repository.updated).toHaveLength(0)
   })
 
-  it('rejects a media Field until the media editor exists', async () => {
+  it('rejects changing media references through the text Draft endpoint', async () => {
     const repository = new InMemoryLetterRepository(
       await getTemplate('little-things'),
     )
@@ -141,7 +141,9 @@ describe('UpdateLetterDraftUseCase', () => {
         title: 'Our story',
         content: { sharedPhotos: ['asset-1'] },
       }),
-    ).rejects.toThrow('Letter Field is not editable yet: sharedPhotos')
+    ).rejects.toThrow(
+      'Letter media Field must be changed through media operations: sharedPhotos',
+    )
     expect(repository.updated).toHaveLength(0)
   })
 

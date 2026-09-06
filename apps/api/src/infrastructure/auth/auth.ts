@@ -26,7 +26,7 @@ export function createAuth(
     secret: configService.getOrThrow<string>('BETTER_AUTH_SECRET'),
     trustedOrigins,
     rateLimit: {
-      enabled: true,
+      enabled: configService.getOrThrow<boolean>('AUTH_RATE_LIMIT_ENABLED'),
       window: 60,
       max: 100,
     },

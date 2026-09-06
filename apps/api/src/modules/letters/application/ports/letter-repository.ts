@@ -6,13 +6,16 @@ import type {
 
 export const LETTER_REPOSITORY = Symbol('LETTER_REPOSITORY')
 
-export interface LetterRepository {
-  createDraft(input: CreateLetterDraftRecord): Promise<LetterDraftRecord>
-  listByCreator(creatorId: string): Promise<LetterDraftRecord[]>
+export interface LetterDraftReader {
   findDraftById(
     creatorId: string,
     letterId: string,
   ): Promise<LetterDraftRecord | undefined>
+}
+
+export interface LetterRepository extends LetterDraftReader {
+  createDraft(input: CreateLetterDraftRecord): Promise<LetterDraftRecord>
+  listByCreator(creatorId: string): Promise<LetterDraftRecord[]>
   updateDraft(
     input: UpdateLetterDraftRecord,
   ): Promise<LetterDraftRecord | undefined>
