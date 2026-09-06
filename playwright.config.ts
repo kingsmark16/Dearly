@@ -17,10 +17,10 @@ const useProductionServers =
   process.env.DEARLY_E2E_SERVER_MODE === 'production' ||
   (process.env.DEARLY_E2E_SERVER_MODE === undefined && Boolean(process.env.CI))
 const apiCommand = useProductionServers
-  ? 'pnpm --filter @dearly/api start'
+  ? 'node apps/api/dist/main.js'
   : 'pnpm --filter @dearly/api dev'
 const webCommand = useProductionServers
-  ? 'pnpm --filter @dearly/web start'
+  ? 'node apps/web/scripts/start-standalone.mjs'
   : 'pnpm --filter @dearly/web dev'
 
 export default defineConfig({

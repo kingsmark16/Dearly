@@ -35,10 +35,5 @@ process.on('SIGINT', () => forwardSignal('SIGINT'))
 process.on('SIGTERM', () => forwardSignal('SIGTERM'))
 
 server.on('exit', (code, signal) => {
-  if (signal) {
-    process.kill(process.pid, signal)
-    return
-  }
-
-  process.exitCode = code ?? 1
+  process.exitCode = signal ? 1 : (code ?? 1)
 })
