@@ -47,6 +47,7 @@ export default defineConfig({
         BETTER_AUTH_URL: apiOrigin,
         WEB_ORIGIN: webOrigin,
         SMTP_FROM: 'noreply@dearly.dev',
+        AUTH_RATE_LIMIT_ENABLED: 'false',
       },
       // The API must be started in test mode so the in-memory verification
       // mailbox exists; never reuse an ordinary development API here.

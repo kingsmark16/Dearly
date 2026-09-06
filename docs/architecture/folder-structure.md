@@ -126,13 +126,19 @@ modules/letters/
   domain/                 Letter rules and lifecycle types
   application/            create/list/save/publish use cases and ports
   presentation/           HTTP controllers and response DTOs
-  infrastructure/         Prisma repository and future media adapters
+  infrastructure/         Prisma repository and external adapters
+  media/
+    domain/               media rules, limits, and draft content updates
+    application/          media upload, completion, deletion, and ordering
+    presentation/         creator media controllers and transport DTOs
+    infrastructure/       Prisma media repository and R2/local storage
   public/                  public Viewer read model and controller
 ```
 
-The editor, publish, archive, trash, and media behaviors should add files to
-these existing seams as they are implemented. Do not move persistence or
-authorization rules into the Next.js feature folders.
+The editor, publish, archive, and trash behaviors should add files to these
+existing seams as they are implemented. Media is nested under `letters`
+because a Media asset belongs to exactly one Letter in v1. Do not move
+persistence or authorization rules into the Next.js feature folders.
 
 ## Catalog structure for Categories and Templates
 
@@ -246,6 +252,7 @@ packages/contracts/src/
   letters/
     create-draft.ts
     creator-letter.ts
+    media.ts
     published-letter.ts
   index.ts              public package exports only
 ```
@@ -309,21 +316,29 @@ apps/web/src/
       hooks/
     letters/
       api/
+        complete-creator-letter-media-upload.ts
         create-letter-draft.ts
+        create-media-upload-intent.ts
+        delete-creator-letter-media.ts
         get-creator-letter-draft.ts
+        get-creator-letter-media.ts
         get-creator-letters.ts
+        reorder-creator-letter-media.ts
         update-creator-letter-draft.ts
+        upload-creator-letter-media.ts
       components/
         draft-editor.tsx
+        media-field-editor.tsx
         elements/
       hooks/
         use-creator-letter.ts
+        use-creator-letter-media.ts
         use-creator-letters.ts
         use-create-letter-draft.ts
+        use-delete-creator-letter-media.ts
+        use-reorder-creator-letter-media.ts
         use-update-creator-letter-draft.ts
-    media/
-      api/
-      components/
+        use-upload-creator-letter-media.ts
   providers/
     query-provider.tsx
   lib/
@@ -336,7 +351,9 @@ Keep route pages thin: load route parameters, call a feature API function,
 handle route-level errors, and compose the feature component. Server Components
 should own initial public Letter reads where possible. Small Client Components
 should own stateful behavior such as click-to-reveal, audio controls, and GSAP
-animation.
+animation. Letter-owned media upload and ordering code stays in
+`features/letters`; create a top-level `features/media` only if assets become
+a reusable cross-Letter resource.
 
 TanStack Query hooks belong in the feature that owns the resource. For example,
 catalog queries belong in `features/catalog/hooks`, while Creator Letter draft

@@ -22,6 +22,19 @@ export {
   type CreatorLetterSummary,
 } from './letters/creator-letter'
 export {
+  CreateMediaUploadIntentInputSchema,
+  CreatorMediaAssetListSchema,
+  CreatorMediaAssetSchema,
+  MediaAssetKindSchema,
+  MediaAssetStatusSchema,
+  MediaUploadIntentSchema,
+  ReorderMediaGalleryInputSchema,
+  type CreatorMediaAsset,
+  type CreateMediaUploadIntentInput,
+  type MediaUploadIntent,
+  type ReorderMediaGalleryInput,
+} from './letters/media'
+export {
   CategoryListSchema,
   CategorySchema,
   CategorySeedSchema,

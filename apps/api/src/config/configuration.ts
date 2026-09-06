@@ -22,6 +22,21 @@ export const environmentValidationSchema = Joi.object({
   SMTP_USER: Joi.string().allow('').default(''),
   SMTP_PASSWORD: Joi.string().allow('').default(''),
   SMTP_FROM: Joi.string().email().default('noreply@dearly.dev'),
+  AUTH_RATE_LIMIT_ENABLED: Joi.boolean()
+    .truthy('true')
+    .falsy('false')
+    .default(true),
+  MEDIA_STORAGE_DRIVER: Joi.string().valid('memory', 'r2').default('memory'),
+  MEDIA_UPLOAD_INTENT_TTL_SECONDS: Joi.number()
+    .integer()
+    .min(60)
+    .max(3600)
+    .default(900),
+  R2_ACCOUNT_ID: Joi.string().allow('').default(''),
+  R2_ACCESS_KEY_ID: Joi.string().allow('').default(''),
+  R2_SECRET_ACCESS_KEY: Joi.string().allow('').default(''),
+  R2_BUCKET_NAME: Joi.string().default('dearly-media'),
+  R2_PUBLIC_URL: Joi.string().allow('').default(''),
 })
 
 export function validateEnvironment(
@@ -63,6 +78,27 @@ export function validateEnvironment(
 
     if (['127.0.0.1', 'localhost'].includes(value.SMTP_HOST)) {
       throw new Error('SMTP_HOST must point to a production email service')
+    }
+
+    if (value.MEDIA_STORAGE_DRIVER !== 'r2') {
+      throw new Error('MEDIA_STORAGE_DRIVER must be r2 in production')
+    }
+
+    if (value.AUTH_RATE_LIMIT_ENABLED !== true) {
+      throw new Error('AUTH_RATE_LIMIT_ENABLED must be true in production')
+    }
+
+    const missingR2Keys = [
+      'R2_ACCOUNT_ID',
+      'R2_ACCESS_KEY_ID',
+      'R2_SECRET_ACCESS_KEY',
+      'R2_BUCKET_NAME',
+    ].filter((key) => !environment[key])
+
+    if (missingR2Keys.length > 0) {
+      throw new Error(
+        `Missing required production R2 environment variables: ${missingR2Keys.join(', ')}`,
+      )
     }
 
     if (new URL(value.BETTER_AUTH_URL).protocol !== 'https:') {

@@ -14,7 +14,8 @@
     "./catalog/template-response": "./src/catalog/template-response.ts",
     "./letters/create-draft": "./src/letters/create-draft.ts",
     "./letters/update-draft": "./src/letters/update-draft.ts",
-    "./letters/creator-letter": "./src/letters/creator-letter.ts"
+    "./letters/creator-letter": "./src/letters/creator-letter.ts",
+    "./letters/media": "./src/letters/media.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",
