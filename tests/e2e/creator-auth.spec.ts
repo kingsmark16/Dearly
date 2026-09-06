@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test'
 
+const apiOrigin = process.env.DEARLY_E2E_API_URL ?? 'http://127.0.0.1:4000'
+
 test('Creator must verify email before using the protected area', async ({
   page,
   request,
@@ -32,7 +34,7 @@ test('Creator must verify email before using the protected area', async ({
     .poll(
       async () => {
         const response = await request.get(
-          `http://127.0.0.1:4000/api/v1/test/mail/verification?email=${encodeURIComponent(email)}`,
+          `${apiOrigin}/api/v1/test/mail/verification?email=${encodeURIComponent(email)}`,
         )
 
         if (response.status() !== 200) {
@@ -47,7 +49,7 @@ test('Creator must verify email before using the protected area', async ({
       },
       { timeout: 10_000 },
     )
-    .toMatch(/^http:\/\/127\.0\.0\.1:4000\/api\/auth\/verify-email\?/)
+    .toContain(`${apiOrigin}/api/auth/verify-email?`)
 
   await page.goto(verificationUrl)
   await expect(page).toHaveURL(/\/creator$/)

@@ -107,6 +107,13 @@ jobs:
           DATABASE_URL: postgresql://dearly:dearly@127.0.0.1:5432/dearly
           DIRECT_URL: postgresql://dearly:dearly@127.0.0.1:5432/dearly
 
+      - name: Build applications for E2E
+        run: pnpm build
+        env:
+          DEARLY_API_URL: http://127.0.0.1:4000/api/v1
+          NEXT_PUBLIC_API_URL: http://127.0.0.1:4000/api/v1
+          NEXT_PUBLIC_AUTH_URL: http://127.0.0.1:4000
+
       - name: Install Playwright Chromium
         run: pnpm exec playwright install --with-deps chromium
 
