@@ -10,5 +10,6 @@ export function useCreatorLetterMedia(letterId: string) {
   return useQuery({
     queryKey: creatorLetterMediaQueryKey(letterId),
     queryFn: () => getCreatorLetterMedia(letterId),
+    retry: false,
   })
 }
