@@ -1,5 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common'
 import {
+  CREATOR_ACCOUNT_REPOSITORY,
+  type CreatorAccountRepository,
+} from '../../creator/application/ports/creator-account-repository.js'
+import {
   getTrashRetentionCutoff,
   type PermanentlyDeletedLetter,
 } from '../domain/letter.js'
@@ -14,6 +18,7 @@ import {
 
 export type CleanupExpiredLettersResult = {
   deletedCount: number
+  deletedCreatorCount: number
 }
 
 async function deleteMediaObjects(
@@ -32,6 +37,8 @@ export class CleanupExpiredLettersUseCase {
     private readonly letterRepository: LetterLifecycleRepository,
     @Inject(OBJECT_STORAGE)
     private readonly objectStorage: ObjectStorage,
+    @Inject(CREATOR_ACCOUNT_REPOSITORY)
+    private readonly creatorAccountRepository: CreatorAccountRepository,
   ) {}
 
   async execute(now: Date = new Date()): Promise<CleanupExpiredLettersResult> {
@@ -51,6 +58,20 @@ export class CleanupExpiredLettersUseCase {
       deletedCount += 1
     }
 
-    return { deletedCount }
+    const expiredCreators =
+      await this.creatorAccountRepository.listExpiredDeletions(
+        getTrashRetentionCutoff(now),
+      )
+    let deletedCreatorCount = 0
+
+    for (const creatorId of expiredCreators) {
+      if (
+        await this.creatorAccountRepository.permanentlyDeleteAccount(creatorId)
+      ) {
+        deletedCreatorCount += 1
+      }
+    }
+
+    return { deletedCount, deletedCreatorCount }
   }
 }

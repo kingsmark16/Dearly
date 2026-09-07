@@ -11,6 +11,7 @@ import { CreatorTemplatePicker } from './creator-template-picker'
 import { useCreateLetterDraft } from '../../letters/hooks/use-create-letter-draft'
 import { useCreatorLetters } from '../../letters/hooks/use-creator-letters'
 import { CreatorLetterList } from '../../letters/components/creator-letter-list'
+import { CreatorAccountDeletion } from './creator-account-deletion'
 
 export function CreatorArea() {
   const router = useRouter()
@@ -40,6 +41,11 @@ export function CreatorArea() {
     } finally {
       setIsSigningOut(false)
     }
+  }
+
+  async function handleAccountDeleted() {
+    await authClient.signOut().catch(() => undefined)
+    router.replace('/sign-in')
   }
 
   function handleCreateDraft(templateSlug: string) {
@@ -160,6 +166,8 @@ export function CreatorArea() {
           <CreatorLetterList letters={lettersQuery.data} />
         ) : null}
       </section>
+
+      <CreatorAccountDeletion onDeleted={handleAccountDeleted} />
 
       <Button disabled={isSigningOut} onClick={handleSignOut} type="button">
         {isSigningOut ? 'Signing out…' : 'Sign out'}

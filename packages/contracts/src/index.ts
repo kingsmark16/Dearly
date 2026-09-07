@@ -3,6 +3,10 @@ export {
   type CreatorProfile,
 } from './auth/creator-profile'
 export {
+  CreatorAccountDeletionResponseSchema,
+  type CreatorAccountDeletionResponse,
+} from './auth/creator-account-deletion'
+export {
   PublishedLetterSchema,
   PublishedLetterElementSchema,
   type PublishedLetterElement,

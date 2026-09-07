@@ -46,9 +46,9 @@ export class LetterRetentionScheduler
     try {
       const result = await this.cleanupExpiredLettersUseCase.execute()
 
-      if (result.deletedCount > 0) {
+      if (result.deletedCount > 0 || result.deletedCreatorCount > 0) {
         this.logger.log(
-          `Permanently deleted ${result.deletedCount} expired Letter(s)`,
+          `Permanently deleted ${result.deletedCount} expired Letter(s) and ${result.deletedCreatorCount} Creator account(s)`,
         )
       }
     } catch (error: unknown) {
