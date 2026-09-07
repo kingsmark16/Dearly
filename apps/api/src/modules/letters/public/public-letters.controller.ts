@@ -1,11 +1,15 @@
 import {
+  Body,
   Controller,
   Get,
   Inject,
   NotFoundException,
   Param,
+  Post,
 } from '@nestjs/common'
 import { AllowAnonymous } from '@thallesp/nestjs-better-auth'
+import { ReportLetterDto } from './report-letter.dto.js'
+import { ReportLetterUseCase } from './report-letter.use-case.js'
 import { PublicLettersService } from './public-letters.service.js'
 
 @AllowAnonymous()
@@ -14,6 +18,8 @@ export class PublicLettersController {
   constructor(
     @Inject(PublicLettersService)
     private readonly publicLettersService: PublicLettersService,
+    @Inject(ReportLetterUseCase)
+    private readonly reportLetterUseCase: ReportLetterUseCase,
   ) {}
 
   @Get(':slug')
@@ -25,5 +31,23 @@ export class PublicLettersController {
     }
 
     return letter
+  }
+
+  @Post(':slug/report')
+  async reportPublishedLetter(
+    @Param('slug') shareToken: string,
+    @Body() input: ReportLetterDto,
+  ) {
+    const result = await this.reportLetterUseCase.execute({
+      shareToken,
+      reason: input.reason,
+      details: input.details,
+    })
+
+    if (!result) {
+      throw new NotFoundException('Published letter not found')
+    }
+
+    return result
   }
 }
