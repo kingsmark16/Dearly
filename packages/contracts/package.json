@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./auth/creator-profile": "./src/auth/creator-profile.ts",
+    "./auth/creator-account-deletion": "./src/auth/creator-account-deletion.ts",
     "./letters/published-letter": "./src/letters/published-letter.ts",
     "./letters/publish-letter": "./src/letters/publish-letter.ts",
     "./catalog/category": "./src/catalog/category.ts",

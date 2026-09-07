@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { CatalogModule } from '../catalog/catalog.module.js'
+import { CreatorModule } from '../creator/creator.module.js'
 import { ChangeLetterLifecycleUseCase } from './application/change-letter-lifecycle.use-case.js'
 import { CleanupExpiredLettersUseCase } from './application/cleanup-expired-letters.use-case.js'
 import { CreateLetterDraftUseCase } from './application/create-letter-draft.use-case.js'
@@ -42,7 +43,7 @@ import { LetterMediaController } from './media/presentation/letter-media.control
 import { LocalMediaStorageController } from './media/presentation/local-media-storage.controller.js'
 
 @Module({
-  imports: [CatalogModule],
+  imports: [CatalogModule, CreatorModule],
   controllers: [
     LettersController,
     PublicLettersController,

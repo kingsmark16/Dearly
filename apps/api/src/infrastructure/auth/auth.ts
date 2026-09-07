@@ -17,6 +17,15 @@ export function createAuth(
     .map((origin) => origin.trim())
     .filter(Boolean)
 
+  async function isCreatorAvailable(userId: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { deletionRequestedAt: true },
+    })
+
+    return Boolean(user && !user.deletionRequestedAt)
+  }
+
   return betterAuth({
     database: prismaAdapter(prisma, {
       provider: 'postgresql',
@@ -29,6 +38,20 @@ export function createAuth(
       enabled: configService.getOrThrow<boolean>('AUTH_RATE_LIMIT_ENABLED'),
       window: 60,
       max: 100,
+    },
+    databaseHooks: {
+      account: {
+        create: {
+          before: async (account) => isCreatorAvailable(account.userId),
+        },
+      },
+      session: {
+        create: {
+          // This remains a second boundary if a future provider attempts to
+          // recreate an Account for a retained, pending-deletion Creator.
+          before: async (session) => isCreatorAvailable(session.userId),
+        },
+      },
     },
     emailAndPassword: {
       enabled: true,
