@@ -65,6 +65,43 @@ describe('InMemoryCatalogRepository', () => {
     ])
   })
 
+  it('lists both Birthday Letter templates with their distinct opening previews', async () => {
+    const repository = new InMemoryCatalogRepository()
+
+    await expect(repository.listTemplates('birthday-letter')).resolves.toEqual([
+      expect.objectContaining({
+        slug: 'make-a-wish',
+        name: 'Make a Wish',
+        category: {
+          slug: 'birthday-letter',
+          name: 'Birthday Letter',
+        },
+        preview: {
+          eyebrow: 'Today is yours',
+          title: 'Make a wish',
+          subtitle:
+            'A few words for the person who brings more light into the world.',
+          ctaLabel: 'Open your birthday letter',
+        },
+      }),
+      expect.objectContaining({
+        slug: 'another-year-brighter',
+        name: 'Another Year Brighter',
+        category: {
+          slug: 'birthday-letter',
+          name: 'Birthday Letter',
+        },
+        preview: {
+          eyebrow: 'A little celebration',
+          title: 'You make life brighter',
+          subtitle:
+            'Press play when you are ready for a birthday wish in my voice.',
+          ctaLabel: 'Open your letter',
+        },
+      }),
+    ])
+  })
+
   it('rejects an unknown category filter', async () => {
     const repository = new InMemoryCatalogRepository()
 
@@ -90,6 +127,107 @@ describe('InMemoryCatalogRepository', () => {
     })
     expect(template?.definition.fields.length).toBeGreaterThan(0)
     expect(template?.definition.elements.length).toBeGreaterThan(0)
+  })
+
+  it('exposes the complete Birthday template definitions for personalization', async () => {
+    const repository = new InMemoryCatalogRepository()
+
+    const makeAWish = await repository.findTemplateBySlug('make-a-wish')
+    expect(makeAWish).toMatchObject({
+      slug: 'make-a-wish',
+      category: { slug: 'birthday-letter' },
+      definition: {
+        fields: [
+          expect.objectContaining({
+            id: 'recipientName',
+            type: 'recipient-name',
+            required: true,
+          }),
+          expect.objectContaining({
+            id: 'birthdayMessage',
+            type: 'rich-text',
+            required: true,
+            maxLength: 2_000,
+          }),
+          expect.objectContaining({
+            id: 'birthdayPhotos',
+            type: 'photo-gallery',
+            required: false,
+            minItems: 1,
+            maxItems: 10,
+          }),
+        ],
+        elements: [
+          expect.objectContaining({
+            id: 'birthday-message',
+            type: 'text',
+          }),
+          expect.objectContaining({
+            id: 'birthday-photos',
+            type: 'photo-gallery',
+          }),
+          expect.objectContaining({
+            id: 'confetti',
+            type: 'animation',
+            token: 'confetti',
+            trigger: 'on-open',
+          }),
+        ],
+        limits: {
+          maxPhotosPerGallery: 10,
+          maxAudioDurationSeconds: 180,
+        },
+      },
+    })
+
+    const anotherYearBrighter = await repository.findTemplateBySlug(
+      'another-year-brighter',
+    )
+    expect(anotherYearBrighter).toMatchObject({
+      slug: 'another-year-brighter',
+      category: { slug: 'birthday-letter' },
+      definition: {
+        fields: [
+          expect.objectContaining({
+            id: 'recipientName',
+            type: 'recipient-name',
+            required: true,
+          }),
+          expect.objectContaining({
+            id: 'birthdayWishes',
+            type: 'rich-text',
+            required: true,
+            maxLength: 2_000,
+          }),
+          expect.objectContaining({
+            id: 'voiceNote',
+            type: 'audio',
+            required: false,
+            maxDurationSeconds: 180,
+          }),
+        ],
+        elements: [
+          expect.objectContaining({
+            id: 'birthday-wishes',
+            type: 'text',
+          }),
+          expect.objectContaining({
+            id: 'voice-note',
+            type: 'audio',
+          }),
+          expect.objectContaining({
+            id: 'sparkles',
+            type: 'animation',
+            token: 'sparkles',
+            trigger: 'on-scroll',
+          }),
+        ],
+        limits: {
+          maxPhotosPerGallery: 10,
+          maxAudioDurationSeconds: 180,
+        },
+      },
+    })
   })
 
   it('returns no template for an unknown slug', async () => {

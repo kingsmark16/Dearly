@@ -37,4 +37,21 @@ test('anonymous Viewer can browse categories and templates', async ({
   await expect(
     loveLetterCategory.locator('[data-template-preview="little-things"]'),
   ).toContainText('Begin reading')
+
+  const birthdayCategory = page.locator(
+    'section[aria-labelledby="birthday-letter-heading"]',
+  )
+  await expect(birthdayCategory).toContainText('2 templates')
+  await expect(
+    birthdayCategory.locator('[data-template-preview="make-a-wish"]'),
+  ).toContainText('Make a wish')
+  await expect(
+    birthdayCategory.locator('[data-template-preview="make-a-wish"]'),
+  ).toContainText('Open your birthday letter')
+  await expect(
+    birthdayCategory.locator('[data-template-preview="another-year-brighter"]'),
+  ).toContainText('You make life brighter')
+  await expect(
+    birthdayCategory.locator('[data-template-preview="another-year-brighter"]'),
+  ).toContainText('Open your letter')
 })
