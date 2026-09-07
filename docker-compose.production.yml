@@ -1,0 +1,89 @@
+name: dearly-production
+
+services:
+  migrate:
+    profiles:
+      - migration
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: migration
+    env_file:
+      - ${DEARLY_ENV_FILE:-.env.production}
+    init: true
+    restart: 'no'
+    command: ['pnpm', '--filter', '@dearly/api', 'db:deploy']
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: runner
+    env_file:
+      - ${DEARLY_ENV_FILE:-.env.production}
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+    expose:
+      - '4000'
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 30s
+    security_opt:
+      - no-new-privileges:true
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: runner
+      args:
+        DEARLY_API_URL: ${DEARLY_API_URL:?DEARLY_API_URL is required}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:?NEXT_PUBLIC_API_URL is required}
+        NEXT_PUBLIC_AUTH_URL: ${NEXT_PUBLIC_AUTH_URL:?NEXT_PUBLIC_AUTH_URL is required}
+        NEXT_PUBLIC_GOOGLE_SIGN_IN_ENABLED: ${NEXT_PUBLIC_GOOGLE_SIGN_IN_ENABLED:-false}
+    env_file:
+      - ${DEARLY_ENV_FILE:-.env.production}
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      DEARLY_API_URL: ${DEARLY_API_URL:?DEARLY_API_URL is required}
+    expose:
+      - '3000'
+    depends_on:
+      api:
+        condition: service_healthy
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 30s
+    security_opt:
+      - no-new-privileges:true
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ${NGINX_TLS_DIR:-./infra/nginx/tls}:/etc/nginx/tls:ro
+      - ${NGINX_ACME_WEBROOT:-./infra/nginx/acme}:/var/www/certbot:ro
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          "wget --no-check-certificate --quiet --output-document=- https://127.0.0.1/nginx-health | grep -q '^ok$'",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

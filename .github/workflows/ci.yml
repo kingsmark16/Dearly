@@ -152,6 +152,19 @@ jobs:
       - name: Show service status
         run: docker compose ps
 
+      - name: Validate production Compose configuration
+        run: >-
+          DEARLY_ENV_FILE=infra/deployment/production.env.example
+          docker compose
+          --env-file infra/deployment/production.env.example
+          -f docker-compose.production.yml
+          config --quiet
+
+      - name: Validate production Dockerfiles
+        run: |
+          docker buildx build --check --file apps/api/Dockerfile .
+          docker buildx build --check --file apps/web/Dockerfile .
+
       - name: Tear down local infrastructure
         if: ${{ always() }}
         run: docker compose down --remove-orphans

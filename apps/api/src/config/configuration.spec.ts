@@ -14,6 +14,7 @@ const productionEnvironment = {
   SMTP_HOST: 'smtp.example.com',
   SMTP_PORT: 587,
   SMTP_FROM: 'noreply@dearly.dev',
+  REDIS_URL: 'rediss://redis.example.com',
   AUTH_RATE_LIMIT_ENABLED: true,
   MEDIA_STORAGE_DRIVER: 'r2',
   R2_ACCOUNT_ID: 'account-id',
@@ -54,6 +55,26 @@ describe('validateEnvironment', () => {
         AUTH_RATE_LIMIT_ENABLED: false,
       }),
     ).toThrow('AUTH_RATE_LIMIT_ENABLED must be true in production')
+  })
+
+  it('requires Redis configuration in production', () => {
+    const withoutRedis = {
+      ...productionEnvironment,
+      REDIS_URL: undefined,
+    }
+
+    expect(() => validateEnvironment(withoutRedis)).toThrow(
+      'Missing required production environment variables: REDIS_URL',
+    )
+  })
+
+  it('rejects a loopback Redis endpoint in production', () => {
+    expect(() =>
+      validateEnvironment({
+        ...productionEnvironment,
+        REDIS_URL: 'redis://127.0.0.1:6379',
+      }),
+    ).toThrow('REDIS_URL must point to a production Redis service')
   })
 
   it('rejects production Google authentication without provider credentials', () => {

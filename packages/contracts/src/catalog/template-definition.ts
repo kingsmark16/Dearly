@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { TemplateElementSchema } from './template-element'
-import { TemplateFieldSchema } from './template-field'
+import { TemplateElementSchema } from './template-element.js'
+import { TemplateFieldSchema } from './template-field.js'
 
 export const TemplateOpeningScreenSchema = z.object({
   eyebrow: z.string().min(1),

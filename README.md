@@ -86,7 +86,9 @@ variables; Mailpit is rejected in production configuration.
 For a containerized deployment, set `DEARLY_API_URL` to the internal API
 service, such as `http://api:4000/api/v1`, and set `WEB_ORIGIN` to the public
 web origin. The API refuses to start in production without an explicit CORS
-allowlist.
+allowlist. The complete production topology, environment contract, migration
+procedure, HTTPS proxy, rollback guidance, and staging smoke test are in
+[`docs/deployment/production.md`](docs/deployment/production.md).
 
 ## Verification commands
 
