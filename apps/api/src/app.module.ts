@@ -13,6 +13,7 @@ import { CreatorModule } from './modules/creator/creator.module.js'
 import { CatalogModule } from './modules/catalog/catalog.module.js'
 import { LettersModule } from './modules/letters/letters.module.js'
 import { TestMailModule } from './modules/test-mail/test-mail.module.js'
+import { TestAuthModule } from './modules/test-auth/test-auth.module.js'
 import { HealthController } from './platform/health/health.controller.js'
 import { PrismaService } from './infrastructure/database/prisma.service.js'
 
@@ -40,6 +41,7 @@ import { PrismaService } from './infrastructure/database/prisma.service.js'
         auth: createAuth(prisma, configService, emailDelivery),
       }),
     }),
+    TestAuthModule,
     TestMailModule,
   ],
   controllers: [HealthController],

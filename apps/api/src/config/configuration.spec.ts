@@ -7,6 +7,9 @@ const productionEnvironment = {
   DIRECT_URL: 'postgresql://direct.example.com/dearly',
   BETTER_AUTH_SECRET: 'a-real-production-secret-that-is-long-enough',
   BETTER_AUTH_URL: 'https://auth.dearly.example',
+  GOOGLE_AUTH_MODE: 'google',
+  GOOGLE_CLIENT_ID: 'dearly-google-client-id',
+  GOOGLE_CLIENT_SECRET: 'dearly-google-client-secret',
   WEB_ORIGIN: 'https://dearly.example',
   SMTP_HOST: 'smtp.example.com',
   SMTP_PORT: 587,
@@ -51,5 +54,25 @@ describe('validateEnvironment', () => {
         AUTH_RATE_LIMIT_ENABLED: false,
       }),
     ).toThrow('AUTH_RATE_LIMIT_ENABLED must be true in production')
+  })
+
+  it('rejects production Google authentication without provider credentials', () => {
+    expect(() =>
+      validateEnvironment({
+        ...productionEnvironment,
+        GOOGLE_CLIENT_SECRET: '',
+      }),
+    ).toThrow(
+      'Google authentication requires GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET',
+    )
+  })
+
+  it('allows the deterministic Google fixture outside production', () => {
+    expect(
+      validateEnvironment({
+        NODE_ENV: 'test',
+        GOOGLE_AUTH_MODE: 'fixture',
+      }),
+    ).toMatchObject({ GOOGLE_AUTH_MODE: 'fixture' })
   })
 })

@@ -1,9 +1,80 @@
 import { betterAuth } from 'better-auth'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
+import { genericOAuth } from 'better-auth/plugins/generic-oauth'
 import { Logger } from '@nestjs/common'
 import type { ConfigService } from '@nestjs/config'
+import type { GoogleAuthMode } from '../../config/configuration.js'
 import type { PrismaClient } from '../../generated/prisma/client.js'
 import type { EmailDeliveryService } from '../email/email-delivery.service.js'
+
+const fixtureGoogleAuthorizationCode = 'dearly-google-fixture-code'
+const fixtureGoogleAccessToken = 'dearly-google-fixture-access-token'
+
+function createGoogleAuthOptions(configService: ConfigService) {
+  const mode = configService.getOrThrow<GoogleAuthMode>('GOOGLE_AUTH_MODE')
+
+  if (mode === 'disabled') {
+    return {}
+  }
+
+  if (mode === 'google') {
+    return {
+      socialProviders: {
+        google: {
+          clientId: configService.getOrThrow<string>('GOOGLE_CLIENT_ID'),
+          clientSecret: configService.getOrThrow<string>(
+            'GOOGLE_CLIENT_SECRET',
+          ),
+          prompt: 'select_account' as const,
+        },
+      },
+    }
+  }
+
+  const fixtureAuthorizationUrl = new URL(
+    '/api/v1/test/google/authorize',
+    configService.getOrThrow<string>('BETTER_AUTH_URL'),
+  ).toString()
+
+  return {
+    plugins: [
+      genericOAuth({
+        config: [
+          {
+            providerId: 'google',
+            name: 'Google',
+            clientId: 'dearly-google-fixture-client',
+            clientSecret: 'dearly-google-fixture-secret',
+            authorizationUrl: fixtureAuthorizationUrl,
+            scopes: ['openid', 'email', 'profile'],
+            getToken: async ({ code }: { code: string }) => {
+              if (code !== fixtureGoogleAuthorizationCode) {
+                throw new Error('Invalid Google fixture authorization code')
+              }
+
+              return {
+                accessToken: fixtureGoogleAccessToken,
+                tokenType: 'Bearer',
+              }
+            },
+            getUserInfo: async ({ accessToken }) => {
+              if (accessToken !== fixtureGoogleAccessToken) {
+                return null
+              }
+
+              return {
+                id: 'dearly-google-fixture-user',
+                email: 'google-fixture@example.com',
+                emailVerified: true,
+                name: 'Google Fixture Creator',
+              }
+            },
+          },
+        ],
+      }),
+    ],
+  }
+}
 
 export function createAuth(
   prisma: PrismaClient,
@@ -27,6 +98,7 @@ export function createAuth(
   }
 
   return betterAuth({
+    ...createGoogleAuthOptions(configService),
     database: prismaAdapter(prisma, {
       provider: 'postgresql',
     }),

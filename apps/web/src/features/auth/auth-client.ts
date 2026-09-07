@@ -12,3 +12,6 @@ const authClientOptions = configuredAuthUrl
     : { baseURL: localAuthUrl }
 
 export const authClient = createAuthClient(authClientOptions)
+
+export const isGoogleSignInEnabled =
+  process.env.NEXT_PUBLIC_GOOGLE_SIGN_IN_ENABLED === 'true'

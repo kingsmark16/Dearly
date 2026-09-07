@@ -6,6 +6,8 @@ export const localAuthSecret =
   'dearly-local-development-secret-change-me-please'
 const exampleAuthSecret = 'replace-with-a-long-random-secret'
 
+export type GoogleAuthMode = 'disabled' | 'google' | 'fixture'
+
 export const environmentValidationSchema = Joi.object({
   NODE_ENV: Joi.string()
     .valid('development', 'test', 'production')
@@ -15,6 +17,11 @@ export const environmentValidationSchema = Joi.object({
   DIRECT_URL: Joi.string().uri().default(localDatabaseUrl),
   BETTER_AUTH_SECRET: Joi.string().min(32).default(localAuthSecret),
   BETTER_AUTH_URL: Joi.string().uri().default('http://127.0.0.1:4000'),
+  GOOGLE_AUTH_MODE: Joi.string()
+    .valid('disabled', 'google', 'fixture')
+    .default('disabled'),
+  GOOGLE_CLIENT_ID: Joi.string().allow('').default(''),
+  GOOGLE_CLIENT_SECRET: Joi.string().allow('').default(''),
   WEB_ORIGIN: Joi.string().default('http://127.0.0.1:3000'),
   SMTP_HOST: Joi.string().default('127.0.0.1'),
   SMTP_PORT: Joi.number().port().default(1025),
@@ -92,6 +99,10 @@ export function validateEnvironment(
       throw new Error('AUTH_RATE_LIMIT_ENABLED must be true in production')
     }
 
+    if (value.GOOGLE_AUTH_MODE !== 'google') {
+      throw new Error('GOOGLE_AUTH_MODE must be google in production')
+    }
+
     const missingR2Keys = [
       'R2_ACCOUNT_ID',
       'R2_ACCESS_KEY_ID',
@@ -121,6 +132,15 @@ export function validateEnvironment(
     ) {
       throw new Error('WEB_ORIGIN must contain only explicit HTTPS origins')
     }
+  }
+
+  if (
+    value.GOOGLE_AUTH_MODE === 'google' &&
+    (!value.GOOGLE_CLIENT_ID || !value.GOOGLE_CLIENT_SECRET)
+  ) {
+    throw new Error(
+      'Google authentication requires GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET',
+    )
   }
 
   return value
