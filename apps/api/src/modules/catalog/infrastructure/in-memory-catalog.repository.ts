@@ -27,6 +27,7 @@ function toTemplateSummary(
     },
     version: template.version,
     displayOrder: template.displayOrder,
+    preview: template.definition.openingScreen,
   }
 }
 
@@ -131,6 +132,7 @@ export class InMemoryCatalogRepository implements CatalogRepository {
         slug: category.slug,
         name: category.name,
       },
+      preview: template.definition.openingScreen,
       definition: template.definition,
     }
   }

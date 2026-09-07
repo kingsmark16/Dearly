@@ -73,7 +73,9 @@ export {
 } from './catalog/template-element'
 export {
   TemplateListSchema,
+  TemplatePreviewSchema,
   TemplateSummarySchema,
+  type TemplatePreview,
   type TemplateSummary,
 } from './catalog/template'
 export { TemplateSchema, type Template } from './catalog/template-response'

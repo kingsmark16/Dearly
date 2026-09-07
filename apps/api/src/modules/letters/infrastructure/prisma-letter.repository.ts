@@ -41,6 +41,26 @@ function asJsonObject(
   return value as Record<string, unknown>
 }
 
+function toTemplateSnapshot(
+  value: Prisma.JsonValue,
+  fieldName: string,
+): LetterDraftRecord['template'] {
+  const template = asJsonObject(value, fieldName)
+  const definition = asJsonObject(
+    template.definition as Prisma.JsonValue,
+    `${fieldName}.definition`,
+  )
+  const openingScreen = asJsonObject(
+    definition.openingScreen as Prisma.JsonValue,
+    `${fieldName}.definition.openingScreen`,
+  )
+
+  return {
+    ...template,
+    preview: openingScreen,
+  } as unknown as LetterDraftRecord['template']
+}
+
 function toDraftRecord(letter: {
   id: string
   creatorId: string
@@ -60,10 +80,7 @@ function toDraftRecord(letter: {
     creatorId: letter.creatorId,
     title: letter.title,
     status: 'draft',
-    template: asJsonObject(
-      letter.templateSnapshot,
-      'templateSnapshot',
-    ) as unknown as LetterDraftRecord['template'],
+    template: toTemplateSnapshot(letter.templateSnapshot, 'templateSnapshot'),
     content: asJsonObject(letter.content, 'content'),
     createdAt: letter.createdAt,
     updatedAt: letter.updatedAt,
@@ -102,10 +119,7 @@ function toPublishedRecord(letter: {
     title: letter.title,
     status: 'published',
     shareToken: letter.shareToken,
-    template: asJsonObject(
-      letter.templateSnapshot,
-      'templateSnapshot',
-    ) as unknown as LetterPublishedRecord['template'],
+    template: toTemplateSnapshot(letter.templateSnapshot, 'templateSnapshot'),
     content: publishedContent,
     pendingContent:
       JSON.stringify(workingContent) === JSON.stringify(publishedContent)
@@ -217,10 +231,7 @@ function toArchivedRecord(letter: {
     creatorId: letter.creatorId,
     title: letter.title,
     status: 'archived',
-    template: asJsonObject(
-      letter.templateSnapshot,
-      'templateSnapshot',
-    ) as unknown as LetterArchivedRecord['template'],
+    template: toTemplateSnapshot(letter.templateSnapshot, 'templateSnapshot'),
     restoreStatus: toDomainActiveRestoreStatus(letter.archivedFromStatus),
     shareToken: letter.shareToken,
     archivedAt: letter.archivedAt,
@@ -256,10 +267,7 @@ function toTrashedRecord(letter: {
     creatorId: letter.creatorId,
     title: letter.title,
     status: 'trashed',
-    template: asJsonObject(
-      letter.templateSnapshot,
-      'templateSnapshot',
-    ) as unknown as LetterTrashedRecord['template'],
+    template: toTemplateSnapshot(letter.templateSnapshot, 'templateSnapshot'),
     restoreStatus: toDomainRestoreStatus(letter.trashedFromStatus),
     shareToken: letter.shareToken,
     trashedAt: letter.trashedAt,

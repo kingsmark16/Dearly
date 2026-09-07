@@ -3,6 +3,7 @@
 import type { Category } from '@dearly/contracts/catalog/category'
 import type { TemplateSummary } from '@dearly/contracts/catalog/template'
 import { groupTemplatesByCategory } from '../../catalog/lib/group-templates-by-category'
+import { TemplatePreview } from '../../catalog/components/template-preview'
 
 export function CreatorTemplatePicker({
   categories,
@@ -51,7 +52,7 @@ export function CreatorTemplatePicker({
               {categoryTemplates.map((template) => (
                 <article
                   key={template.slug}
-                  className="flex flex-col rounded-2xl border border-[var(--dearly-blush)] bg-white/70 p-5"
+                  className="rounded-2xl border border-[var(--dearly-blush)] bg-white/70 p-4 sm:p-5"
                 >
                   <p className="text-xs uppercase tracking-[0.2em] text-[var(--dearly-plum)]">
                     Version {template.version}
@@ -62,16 +63,23 @@ export function CreatorTemplatePicker({
                   <p className="mt-3 flex-1 text-sm leading-6 text-[var(--dearly-muted)]">
                     {template.description}
                   </p>
-                  <button
-                    className="mt-5 min-h-11 rounded-full border border-[var(--dearly-plum)] px-4 py-2 text-sm font-semibold text-[var(--dearly-plum)] transition hover:bg-[var(--dearly-plum)] hover:text-white disabled:cursor-wait disabled:opacity-60"
-                    disabled={isCreating}
-                    onClick={() => onSelect(template.slug)}
-                    type="button"
-                  >
-                    {isCreating && selectedTemplateSlug === template.slug
-                      ? 'Creating draft…'
-                      : `Create draft with ${template.name}`}
-                  </button>
+                  <div className="mt-5">
+                    <TemplatePreview
+                      action={
+                        <button
+                          className="min-h-10 rounded-full border border-[var(--dearly-plum)] px-4 py-2 text-sm font-semibold text-[var(--dearly-plum)] transition hover:bg-[var(--dearly-plum)] hover:text-white disabled:cursor-wait disabled:opacity-60"
+                          disabled={isCreating}
+                          onClick={() => onSelect(template.slug)}
+                          type="button"
+                        >
+                          {isCreating && selectedTemplateSlug === template.slug
+                            ? 'Creating draft…'
+                            : `Create draft with ${template.name}`}
+                        </button>
+                      }
+                      template={template}
+                    />
+                  </div>
                 </article>
               ))}
             </div>

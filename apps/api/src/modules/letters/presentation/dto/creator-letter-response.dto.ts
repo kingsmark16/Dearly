@@ -48,6 +48,7 @@ function toTemplateSummary(
     category: template.category,
     version: template.version,
     displayOrder: template.displayOrder,
+    preview: template.definition.openingScreen,
   }
 }
 

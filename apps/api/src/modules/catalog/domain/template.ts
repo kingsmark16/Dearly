@@ -20,6 +20,7 @@ export type CatalogTemplate = Omit<
     slug: string
     name: string
   }
+  preview: CatalogTemplateDefinition['openingScreen']
 }
 
 export class CatalogTemplateNotFoundError extends Error {

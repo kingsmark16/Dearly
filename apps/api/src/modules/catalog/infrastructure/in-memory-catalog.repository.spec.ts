@@ -43,8 +43,25 @@ describe('InMemoryCatalogRepository', () => {
     const repository = new InMemoryCatalogRepository()
 
     await expect(repository.listTemplates('love-letter')).resolves.toEqual([
-      expect.objectContaining({ slug: 'our-story' }),
-      expect.objectContaining({ slug: 'little-things' }),
+      expect.objectContaining({
+        slug: 'our-story',
+        preview: {
+          eyebrow: 'A letter for you',
+          title: 'A little piece of us',
+          subtitle:
+            'Take a slow scroll through the moments I never want to forget.',
+          ctaLabel: 'Open letter',
+        },
+      }),
+      expect.objectContaining({
+        slug: 'little-things',
+        preview: {
+          eyebrow: 'For my favorite person',
+          title: 'It is the little things',
+          subtitle: 'The quiet details are often the ones I love the most.',
+          ctaLabel: 'Begin reading',
+        },
+      }),
     ])
   })
 
@@ -64,6 +81,9 @@ describe('InMemoryCatalogRepository', () => {
       slug: 'our-story',
       version: 1,
       category: { name: 'Love Letter' },
+      preview: {
+        title: 'A little piece of us',
+      },
       definition: {
         openingScreen: { title: 'A little piece of us' },
       },

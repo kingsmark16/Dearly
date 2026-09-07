@@ -10,6 +10,12 @@ const template = {
   category: { slug: 'love-letter', name: 'Love Letter' },
   version: 1,
   displayOrder: 1,
+  preview: {
+    eyebrow: 'A note for you',
+    title: 'The opening title',
+    subtitle: 'The opening subtitle.',
+    ctaLabel: 'Open this letter',
+  },
   definition: {
     openingScreen: {
       eyebrow: 'A note for you',
