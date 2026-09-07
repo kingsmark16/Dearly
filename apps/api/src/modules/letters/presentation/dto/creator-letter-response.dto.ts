@@ -1,16 +1,21 @@
 import type { TemplateSummary } from '@dearly/contracts/catalog/template'
 import {
   getEditableLetterContent,
+  type CreatorLetterLifecycleRecord,
   type CreatorLetterRecord,
+  type LetterRestoreStatus,
 } from '../../domain/letter.js'
 
 export type CreatorLetterSummaryResponse = {
   id: string
   title: string
-  status: CreatorLetterRecord['status']
+  status: CreatorLetterLifecycleRecord['status']
   template: TemplateSummary
+  restoreStatus: LetterRestoreStatus | null
   hasPendingRevision: boolean
   shareUrl: string | null
+  archivedAt: string | null
+  trashedAt: string | null
   createdAt: string
   updatedAt: string
 }
@@ -30,7 +35,7 @@ export type CreatorLetterResponse = {
 export type CreatorLetterDraftResponse = CreatorLetterResponse
 
 function toTemplateSummary(
-  template: CreatorLetterRecord['template'],
+  template: CreatorLetterLifecycleRecord['template'],
 ): TemplateSummary {
   return {
     slug: template.slug,
@@ -42,8 +47,22 @@ function toTemplateSummary(
   }
 }
 
+function getRestoreStatus(letter: CreatorLetterLifecycleRecord) {
+  return letter.status === 'archived' || letter.status === 'trashed'
+    ? letter.restoreStatus
+    : null
+}
+
+function getArchivedAt(letter: CreatorLetterLifecycleRecord) {
+  return letter.status === 'archived' ? letter.archivedAt.toISOString() : null
+}
+
+function getTrashedAt(letter: CreatorLetterLifecycleRecord) {
+  return letter.status === 'trashed' ? letter.trashedAt.toISOString() : null
+}
+
 export function toCreatorLetterSummaryResponse(
-  letter: CreatorLetterRecord,
+  letter: CreatorLetterLifecycleRecord,
   shareUrl: string | null,
 ): CreatorLetterSummaryResponse {
   return {
@@ -51,9 +70,12 @@ export function toCreatorLetterSummaryResponse(
     title: letter.title,
     status: letter.status,
     template: toTemplateSummary(letter.template),
+    restoreStatus: getRestoreStatus(letter),
     hasPendingRevision:
       letter.status === 'published' && letter.pendingContent !== null,
     shareUrl,
+    archivedAt: getArchivedAt(letter),
+    trashedAt: getTrashedAt(letter),
     createdAt: letter.createdAt.toISOString(),
     updatedAt: letter.updatedAt.toISOString(),
   }

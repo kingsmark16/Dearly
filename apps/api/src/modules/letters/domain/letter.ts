@@ -26,6 +26,57 @@ export type LetterPublishedRecord = {
 
 export type CreatorLetterRecord = LetterDraftRecord | LetterPublishedRecord
 
+export type LetterRestoreStatus = 'draft' | 'published' | 'archived'
+
+export type LetterArchivedRecord = {
+  id: string
+  creatorId: string
+  title: string
+  status: 'archived'
+  template: CatalogTemplate
+  restoreStatus: 'draft' | 'published'
+  shareToken: string | null
+  archivedAt: Date
+  createdAt: Date
+  updatedAt: Date
+}
+
+export type LetterTrashedRecord = {
+  id: string
+  creatorId: string
+  title: string
+  status: 'trashed'
+  template: CatalogTemplate
+  restoreStatus: LetterRestoreStatus
+  shareToken: string | null
+  trashedAt: Date
+  createdAt: Date
+  updatedAt: Date
+}
+
+export type CreatorLetterLifecycleRecord =
+  CreatorLetterRecord | LetterArchivedRecord | LetterTrashedRecord
+
+export type LetterLifecycleAction = 'archive' | 'restore' | 'trash'
+
+export type LetterTrashCandidate = {
+  creatorId: string
+  letterId: string
+}
+
+export type PermanentlyDeletedLetter = {
+  letterId: string
+  mediaObjectKeys: string[]
+}
+
+export const LETTER_TRASH_RETENTION_DAYS = 90
+
+export function getTrashRetentionCutoff(now: Date) {
+  return new Date(
+    now.getTime() - LETTER_TRASH_RETENTION_DAYS * 24 * 60 * 60 * 1000,
+  )
+}
+
 export type CreateLetterDraftRecord = {
   creatorId: string
   title: string
@@ -53,6 +104,20 @@ export class LetterNotFoundError extends Error {
   constructor(letterId: string) {
     super(`Letter not found: ${letterId}`)
     this.name = 'LetterNotFoundError'
+  }
+}
+
+export class LetterLifecycleTransitionError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'LetterLifecycleTransitionError'
+  }
+}
+
+export class LetterLifecycleValidationError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'LetterLifecycleValidationError'
   }
 }
 

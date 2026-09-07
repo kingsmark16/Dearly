@@ -32,6 +32,10 @@ export const environmentValidationSchema = Joi.object({
     .min(60)
     .max(3600)
     .default(900),
+  LETTER_RETENTION_CLEANUP_INTERVAL_MINUTES: Joi.number()
+    .integer()
+    .min(1)
+    .default(1440),
   R2_ACCOUNT_ID: Joi.string().allow('').default(''),
   R2_ACCESS_KEY_ID: Joi.string().allow('').default(''),
   R2_SECRET_ACCESS_KEY: Joi.string().allow('').default(''),
