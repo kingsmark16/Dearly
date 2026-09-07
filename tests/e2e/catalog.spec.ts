@@ -20,4 +20,21 @@ test('anonymous Viewer can browse categories and templates', async ({
   await expect(
     page.getByRole('heading', { name: 'Years Together' }),
   ).toBeVisible()
+
+  const loveLetterCategory = page.locator(
+    'section[aria-labelledby="love-letter-heading"]',
+  )
+  await expect(loveLetterCategory).toContainText('2 templates')
+  await expect(
+    loveLetterCategory.locator('[data-template-preview="our-story"]'),
+  ).toContainText('A little piece of us')
+  await expect(
+    loveLetterCategory.locator('[data-template-preview="our-story"]'),
+  ).toContainText('Open letter')
+  await expect(
+    loveLetterCategory.locator('[data-template-preview="little-things"]'),
+  ).toContainText('It is the little things')
+  await expect(
+    loveLetterCategory.locator('[data-template-preview="little-things"]'),
+  ).toContainText('Begin reading')
 })

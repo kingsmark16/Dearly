@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { Category } from '@dearly/contracts/catalog/category'
 import type { TemplateSummary } from '@dearly/contracts/catalog/template'
 import { groupTemplatesByCategory } from '../lib/group-templates-by-category'
+import { TemplatePreview } from './template-preview'
 
 export function CatalogBrowser({
   categories,
@@ -65,7 +66,7 @@ export function CatalogBrowser({
                   {categoryTemplates.map((template) => (
                     <article
                       key={template.slug}
-                      className="flex min-h-64 flex-col rounded-[1.75rem] border border-white/80 bg-white/75 p-7 shadow-[0_1.5rem_4rem_rgb(122_83_110/0.1)] backdrop-blur transition hover:-translate-y-1 hover:shadow-[0_1.75rem_4rem_rgb(122_83_110/0.16)]"
+                      className="rounded-[1.75rem] border border-white/80 bg-white/75 p-4 shadow-[0_1.5rem_4rem_rgb(122_83_110/0.1)] backdrop-blur transition hover:-translate-y-1 hover:shadow-[0_1.75rem_4rem_rgb(122_83_110/0.16)] sm:p-5"
                     >
                       <div className="flex items-start justify-between gap-5">
                         <div>
@@ -81,15 +82,22 @@ export function CatalogBrowser({
                           v{template.version}
                         </span>
                       </div>
-                      <p className="mt-5 flex-1 leading-7 text-[var(--dearly-muted)]">
+                      <p className="mt-4 leading-7 text-[var(--dearly-muted)]">
                         {template.description}
                       </p>
-                      <Link
-                        className="mt-7 inline-flex min-h-11 w-fit items-center justify-center rounded-full bg-[var(--dearly-plum)] px-5 py-3 text-sm font-semibold text-white transition hover:brightness-110"
-                        href="/sign-up"
-                      >
-                        Use this template
-                      </Link>
+                      <div className="mt-5">
+                        <TemplatePreview
+                          action={
+                            <Link
+                              className="inline-flex min-h-10 items-center justify-center rounded-full bg-[var(--dearly-plum)] px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110"
+                              href="/sign-up"
+                            >
+                              Use this template
+                            </Link>
+                          }
+                          template={template}
+                        />
+                      </div>
                     </article>
                   ))}
                 </div>
