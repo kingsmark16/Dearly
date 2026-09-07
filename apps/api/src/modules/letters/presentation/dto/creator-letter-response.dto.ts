@@ -14,6 +14,8 @@ export type CreatorLetterSummaryResponse = {
   restoreStatus: LetterRestoreStatus | null
   hasPendingRevision: boolean
   shareUrl: string | null
+  viewCount: number
+  lastViewedAt: string | null
   archivedAt: string | null
   trashedAt: string | null
   createdAt: string
@@ -28,6 +30,8 @@ export type CreatorLetterResponse = {
   content: Record<string, unknown>
   hasPendingRevision: boolean
   shareUrl: string | null
+  viewCount: number
+  lastViewedAt: string | null
   createdAt: string
   updatedAt: string
 }
@@ -61,6 +65,16 @@ function getTrashedAt(letter: CreatorLetterLifecycleRecord) {
   return letter.status === 'trashed' ? letter.trashedAt.toISOString() : null
 }
 
+function getViewCount(letter: CreatorLetterLifecycleRecord) {
+  return letter.status === 'published' ? letter.viewCount : 0
+}
+
+function getLastViewedAt(letter: CreatorLetterLifecycleRecord) {
+  return letter.status === 'published' && letter.lastViewedAt
+    ? letter.lastViewedAt.toISOString()
+    : null
+}
+
 export function toCreatorLetterSummaryResponse(
   letter: CreatorLetterLifecycleRecord,
   shareUrl: string | null,
@@ -74,6 +88,8 @@ export function toCreatorLetterSummaryResponse(
     hasPendingRevision:
       letter.status === 'published' && letter.pendingContent !== null,
     shareUrl,
+    viewCount: getViewCount(letter),
+    lastViewedAt: getLastViewedAt(letter),
     archivedAt: getArchivedAt(letter),
     trashedAt: getTrashedAt(letter),
     createdAt: letter.createdAt.toISOString(),
@@ -94,6 +110,11 @@ export function toCreatorLetterDraftResponse(
     hasPendingRevision:
       letter.status === 'published' && letter.pendingContent !== null,
     shareUrl,
+    viewCount: letter.status === 'published' ? letter.viewCount : 0,
+    lastViewedAt:
+      letter.status === 'published' && letter.lastViewedAt
+        ? letter.lastViewedAt.toISOString()
+        : null,
     createdAt: letter.createdAt.toISOString(),
     updatedAt: letter.updatedAt.toISOString(),
   }

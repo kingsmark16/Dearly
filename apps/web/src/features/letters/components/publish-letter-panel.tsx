@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { Button } from '@dearly/ui/button'
 import { usePublishCreatorLetter } from '../hooks/use-publish-creator-letter'
+import { useRegenerateCreatorLetterShareLink } from '../hooks/use-regenerate-creator-letter-share-link'
 
 type PublishProblem = {
   fieldId: string
@@ -19,6 +20,8 @@ type PublishLetterPanelProps = {
   status: 'draft' | 'published'
   hasPendingRevision: boolean
   shareUrl: string | null
+  viewCount: number
+  lastViewedAt: string | null
 }
 
 function getPublishProblems(error: unknown): PublishProblem[] {
@@ -54,7 +57,21 @@ function getPublishErrorMessage(error: unknown) {
     : 'We could not publish this Letter. Please try again.'
 }
 
-function ShareLinkTools({ result }: { result: PublishLetterResponse }) {
+function ShareLinkTools({
+  result,
+  viewCount,
+  lastViewedAt,
+  regenerateError,
+  isRegenerating,
+  onRegenerate,
+}: {
+  result: PublishLetterResponse
+  viewCount: number
+  lastViewedAt: string | null
+  regenerateError: string | null
+  isRegenerating: boolean
+  onRegenerate: () => Promise<void>
+}) {
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>(
     'idle',
   )
@@ -111,6 +128,36 @@ function ShareLinkTools({ result }: { result: PublishLetterResponse }) {
           in Dearly search or public galleries.
         </p>
       </div>
+
+      <div
+        className="flex flex-wrap items-center justify-between gap-4 rounded-xl bg-white/70 p-4"
+        data-testid="letter-view-analytics"
+      >
+        <div>
+          <p className="font-semibold">
+            {viewCount} {viewCount === 1 ? 'View' : 'Views'}
+          </p>
+          <p className="mt-1 text-sm text-[var(--dearly-muted)]">
+            {lastViewedAt
+              ? `Last viewed: ${lastViewedAt}`
+              : 'No Viewer views yet.'}
+          </p>
+        </div>
+        <Button
+          disabled={isRegenerating}
+          onClick={() => void onRegenerate()}
+          type="button"
+          variant="ghost"
+        >
+          {isRegenerating ? 'Regenerating…' : 'Regenerate Share link'}
+        </Button>
+      </div>
+
+      {regenerateError ? (
+        <p className="text-sm text-red-800" role="alert">
+          {regenerateError}
+        </p>
+      ) : null}
 
       <div className="flex flex-col gap-3 sm:flex-row">
         <input
@@ -183,10 +230,14 @@ export function PublishLetterPanel({
   status,
   hasPendingRevision,
   shareUrl,
+  viewCount,
+  lastViewedAt,
 }: PublishLetterPanelProps) {
   const publishMutation = usePublishCreatorLetter()
+  const regenerateMutation = useRegenerateCreatorLetterShareLink()
   const [result, setResult] = useState<PublishLetterResponse | null>(null)
   const [error, setError] = useState<unknown>(null)
+  const [regenerateError, setRegenerateError] = useState<string | null>(null)
 
   const displayResult: PublishLetterResponse | null =
     result ??
@@ -205,6 +256,22 @@ export function PublishLetterPanel({
     }
   }
 
+  async function handleRegenerate() {
+    setRegenerateError(null)
+
+    try {
+      const regenerated = await regenerateMutation.mutateAsync(letterId)
+      setResult(regenerated)
+    } catch (regenerationError: unknown) {
+      setRegenerateError(
+        axios.isAxiosError(regenerationError) &&
+          typeof regenerationError.response?.data?.message === 'string'
+          ? regenerationError.response.data.message
+          : 'We could not regenerate the Share link. Please try again.',
+      )
+    }
+  }
+
   const problems = getPublishProblems(error)
 
   return (
@@ -214,7 +281,14 @@ export function PublishLetterPanel({
       data-testid="publish-letter-panel"
     >
       {displayResult ? (
-        <ShareLinkTools result={displayResult} />
+        <ShareLinkTools
+          isRegenerating={regenerateMutation.isPending}
+          lastViewedAt={lastViewedAt}
+          onRegenerate={handleRegenerate}
+          regenerateError={regenerateError}
+          result={displayResult}
+          viewCount={viewCount}
+        />
       ) : (
         <>
           <div>

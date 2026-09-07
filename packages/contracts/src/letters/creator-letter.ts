@@ -22,6 +22,8 @@ export const CreatorLetterSummarySchema = z.object({
   restoreStatus: creatorLetterRestoreStatusSchema,
   hasPendingRevision: z.boolean(),
   shareUrl: z.string().url().nullable(),
+  viewCount: z.number().int().nonnegative(),
+  lastViewedAt: isoDateTimeSchema.nullable(),
   archivedAt: isoDateTimeSchema.nullable(),
   trashedAt: isoDateTimeSchema.nullable(),
   createdAt: isoDateTimeSchema,
@@ -46,6 +48,8 @@ export const CreatorLetterSchema = z.object({
   content: z.record(z.string(), z.unknown()),
   hasPendingRevision: z.boolean(),
   shareUrl: z.string().url().nullable(),
+  viewCount: z.number().int().nonnegative(),
+  lastViewedAt: isoDateTimeSchema.nullable(),
   createdAt: isoDateTimeSchema,
   updatedAt: isoDateTimeSchema,
 })

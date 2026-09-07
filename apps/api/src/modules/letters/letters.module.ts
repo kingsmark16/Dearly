@@ -7,12 +7,15 @@ import { CreateLetterDraftUseCase } from './application/create-letter-draft.use-
 import { GetCreatorLetterUseCase } from './application/get-creator-letter.use-case.js'
 import { ListCreatorLettersUseCase } from './application/list-creator-letters.use-case.js'
 import { PublishLetterUseCase } from './application/publish-letter.use-case.js'
+import { RegenerateLetterShareLinkUseCase } from './application/regenerate-letter-share-link.use-case.js'
 import {
   CREATOR_LETTER_READER,
   LETTER_EDITOR_REPOSITORY,
   LETTER_LIFECYCLE_REPOSITORY,
   LETTER_PUBLISHING_REPOSITORY,
   LETTER_REPOSITORY,
+  LETTER_SHARE_LINK_REPOSITORY,
+  PUBLISHED_LETTER_ANALYTICS,
   PUBLISHED_LETTER_READER,
 } from './application/ports/letter-repository.js'
 import { UpdateLetterUseCase } from './application/update-letter.use-case.js'
@@ -66,6 +69,10 @@ import { LocalMediaStorageController } from './media/presentation/local-media-st
       useExisting: PrismaLetterRepository,
     },
     {
+      provide: LETTER_SHARE_LINK_REPOSITORY,
+      useExisting: PrismaLetterRepository,
+    },
+    {
       provide: LETTER_PUBLISHING_REPOSITORY,
       useExisting: PrismaLetterRepository,
     },
@@ -73,11 +80,16 @@ import { LocalMediaStorageController } from './media/presentation/local-media-st
       provide: PUBLISHED_LETTER_READER,
       useExisting: PrismaLetterRepository,
     },
+    {
+      provide: PUBLISHED_LETTER_ANALYTICS,
+      useExisting: PrismaLetterRepository,
+    },
     CreateLetterDraftUseCase,
     GetCreatorLetterUseCase,
     ListCreatorLettersUseCase,
     UpdateLetterUseCase,
     PublishLetterUseCase,
+    RegenerateLetterShareLinkUseCase,
     ChangeLetterLifecycleUseCase,
     CleanupExpiredLettersUseCase,
     LetterRetentionScheduler,

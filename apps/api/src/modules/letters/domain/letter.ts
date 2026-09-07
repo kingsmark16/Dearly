@@ -20,6 +20,8 @@ export type LetterPublishedRecord = {
   content: Record<string, unknown>
   pendingContent: Record<string, unknown> | null
   shareToken: string
+  viewCount: number
+  lastViewedAt: Date | null
   createdAt: Date
   updatedAt: Date
 }

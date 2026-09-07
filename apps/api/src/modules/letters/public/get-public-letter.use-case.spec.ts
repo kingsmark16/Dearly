@@ -35,6 +35,8 @@ function createPublishedLetter(
     content,
     pendingContent,
     shareToken: 'share-token-1',
+    viewCount: 0,
+    lastViewedAt: null,
     createdAt: new Date('2026-09-06T00:00:00.000Z'),
     updatedAt: new Date('2026-09-06T00:01:00.000Z'),
   }
@@ -96,6 +98,10 @@ function createStorage() {
   return { storage, createDownloadIntent }
 }
 
+function createAnalyticsWriter() {
+  return { recordView: vi.fn().mockResolvedValue(undefined) }
+}
+
 describe('GetPublicLetterUseCase', () => {
   it('returns the configured story and presigned media without private fields', async () => {
     const template = await getTemplate('little-things')
@@ -113,6 +119,7 @@ describe('GetPublicLetterUseCase', () => {
       new FakePublishedLetterReader(letter),
       new FakeMediaReader(assets),
       storage,
+      createAnalyticsWriter(),
     )
 
     const result = await useCase.execute('share-token-1')
@@ -161,6 +168,7 @@ describe('GetPublicLetterUseCase', () => {
         createReadyAsset('audio-1', 'anniversaryAudio', 'audio'),
       ]),
       storage,
+      createAnalyticsWriter(),
     )
 
     const result = await useCase.execute('share-token-1')
@@ -203,6 +211,7 @@ describe('GetPublicLetterUseCase', () => {
       ),
       new FakeMediaReader([]),
       storage,
+      createAnalyticsWriter(),
     )
 
     const result = await useCase.execute('share-token-1')
@@ -224,9 +233,30 @@ describe('GetPublicLetterUseCase', () => {
       new FakePublishedLetterReader(undefined),
       new FakeMediaReader([]),
       storage,
+      createAnalyticsWriter(),
     )
 
     await expect(useCase.execute('not-the-token')).resolves.toBeUndefined()
     expect(createDownloadIntent).not.toHaveBeenCalled()
+  })
+
+  it('records one aggregate View after a Published Letter opens publicly', async () => {
+    const template = await getTemplate('our-story')
+    const letter = createPublishedLetter(template, {
+      recipientName: 'Alex',
+      favoriteMemory: 'A public memory.',
+    })
+    const { storage } = createStorage()
+    const recordView = vi.fn().mockResolvedValue(undefined)
+    const useCase = new GetPublicLetterUseCase(
+      new FakePublishedLetterReader(letter),
+      new FakeMediaReader([]),
+      storage,
+      { recordView },
+    )
+
+    await expect(useCase.execute('share-token-1')).resolves.toBeDefined()
+    expect(recordView).toHaveBeenCalledTimes(1)
+    expect(recordView).toHaveBeenCalledWith('letter-1')
   })
 })

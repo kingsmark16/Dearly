@@ -1,6 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { randomBytes } from 'node:crypto'
 import {
   getEditableLetterContent,
   LetterDraftNotFoundError,
@@ -17,7 +16,7 @@ import {
   type MediaAssetReader,
 } from '../media/application/ports/media-asset-repository.js'
 import { createLetterShareUrl } from './share-url.js'
-
+import { createLetterShareToken } from './share-token.js'
 export type PublishLetterCommand = {
   creatorId: string
   letterId: string
@@ -26,10 +25,6 @@ export type PublishLetterCommand = {
 export type PublishLetterResult = {
   letter: LetterPublishedRecord
   shareUrl: string
-}
-
-function createShareToken() {
-  return randomBytes(32).toString('base64url')
 }
 
 @Injectable()
@@ -72,7 +67,7 @@ export class PublishLetterUseCase {
         ? await this.letterRepository.publishDraft({
             creatorId: command.creatorId,
             letterId: command.letterId,
-            shareToken: createShareToken(),
+            shareToken: createLetterShareToken(),
           })
         : await this.letterRepository.publishRevision({
             creatorId: command.creatorId,
