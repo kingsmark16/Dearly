@@ -73,6 +73,12 @@ test('Creator must verify email before using the protected area', async ({
   await expect(
     page.locator('[data-template-preview="another-year-brighter"]'),
   ).toContainText('You make life brighter')
+  await expect(
+    page.locator('[data-template-preview="years-together"]'),
+  ).toContainText('Years together')
+  await expect(
+    page.locator('[data-template-preview="still-choosing-you"]'),
+  ).toContainText('Still choosing you')
   await page
     .getByRole('button', { name: 'Create draft with Our Story' })
     .click()

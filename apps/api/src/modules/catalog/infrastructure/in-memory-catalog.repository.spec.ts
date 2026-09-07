@@ -102,6 +102,44 @@ describe('InMemoryCatalogRepository', () => {
     ])
   })
 
+  it('lists both Anniversary Letter templates with their distinct opening previews', async () => {
+    const repository = new InMemoryCatalogRepository()
+
+    await expect(
+      repository.listTemplates('anniversary-letter'),
+    ).resolves.toEqual([
+      expect.objectContaining({
+        slug: 'years-together',
+        name: 'Years Together',
+        category: {
+          slug: 'anniversary-letter',
+          name: 'Anniversary Letter',
+        },
+        preview: {
+          eyebrow: 'Still us',
+          title: 'Years together',
+          subtitle:
+            'The best parts of our story are the ones we are still writing.',
+          ctaLabel: 'Open our story',
+        },
+      }),
+      expect.objectContaining({
+        slug: 'still-choosing-you',
+        name: 'Still Choosing You',
+        category: {
+          slug: 'anniversary-letter',
+          name: 'Anniversary Letter',
+        },
+        preview: {
+          eyebrow: 'A promise worth repeating',
+          title: 'Still choosing you',
+          subtitle: 'Some promises grow more beautiful with time.',
+          ctaLabel: 'Open your letter',
+        },
+      }),
+    ])
+  })
+
   it('rejects an unknown category filter', async () => {
     const repository = new InMemoryCatalogRepository()
 
@@ -220,6 +258,110 @@ describe('InMemoryCatalogRepository', () => {
             type: 'animation',
             token: 'sparkles',
             trigger: 'on-scroll',
+          }),
+        ],
+        limits: {
+          maxPhotosPerGallery: 10,
+          maxAudioDurationSeconds: 180,
+        },
+      },
+    })
+  })
+
+  it('exposes the complete Anniversary template definitions for personalization', async () => {
+    const repository = new InMemoryCatalogRepository()
+
+    const yearsTogether = await repository.findTemplateBySlug('years-together')
+    expect(yearsTogether).toMatchObject({
+      slug: 'years-together',
+      category: { slug: 'anniversary-letter' },
+      definition: {
+        fields: [
+          expect.objectContaining({
+            id: 'recipientName',
+            type: 'recipient-name',
+            required: true,
+          }),
+          expect.objectContaining({
+            id: 'anniversaryMessage',
+            type: 'rich-text',
+            required: true,
+            maxLength: 2_500,
+          }),
+          expect.objectContaining({
+            id: 'chapters',
+            type: 'photo-gallery',
+            required: false,
+            minItems: 3,
+            maxItems: 15,
+          }),
+        ],
+        elements: [
+          expect.objectContaining({
+            id: 'anniversary-message',
+            type: 'text',
+          }),
+          expect.objectContaining({
+            id: 'chapters',
+            type: 'photo-gallery',
+          }),
+          expect.objectContaining({
+            id: 'petals',
+            type: 'animation',
+            token: 'petals',
+            trigger: 'on-scroll',
+          }),
+        ],
+        limits: {
+          maxPhotosPerGallery: 15,
+          maxAudioDurationSeconds: 180,
+        },
+      },
+    })
+
+    const stillChoosingYou =
+      await repository.findTemplateBySlug('still-choosing-you')
+    expect(stillChoosingYou).toMatchObject({
+      slug: 'still-choosing-you',
+      category: { slug: 'anniversary-letter' },
+      definition: {
+        fields: [
+          expect.objectContaining({
+            id: 'recipientName',
+            type: 'recipient-name',
+            required: true,
+          }),
+          expect.objectContaining({
+            id: 'promise',
+            type: 'text',
+            required: true,
+            maxLength: 1_000,
+          }),
+          expect.objectContaining({
+            id: 'privateNote',
+            type: 'rich-text',
+            required: true,
+            maxLength: 2_000,
+          }),
+          expect.objectContaining({
+            id: 'anniversaryAudio',
+            type: 'audio',
+            required: false,
+            maxDurationSeconds: 180,
+          }),
+        ],
+        elements: [
+          expect.objectContaining({
+            id: 'promise',
+            type: 'text',
+          }),
+          expect.objectContaining({
+            id: 'private-note',
+            type: 'reveal',
+          }),
+          expect.objectContaining({
+            id: 'anniversary-audio',
+            type: 'audio',
           }),
         ],
         limits: {
