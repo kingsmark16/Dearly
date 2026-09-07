@@ -1,7 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common'
+import { Inject, Injectable, Logger } from '@nestjs/common'
 import type { PublishedLetter } from '@dearly/contracts/letters/published-letter'
 import {
+  PUBLISHED_LETTER_ANALYTICS,
   PUBLISHED_LETTER_READER,
+  type PublishedLetterAnalyticsWriter,
   type PublishedLetterReader,
 } from '../application/ports/letter-repository.js'
 import {
@@ -21,6 +23,8 @@ const PUBLIC_MEDIA_URL_EXPIRY_SECONDS = 15 * 60
 
 @Injectable()
 export class GetPublicLetterUseCase {
+  private readonly logger = new Logger(GetPublicLetterUseCase.name)
+
   constructor(
     @Inject(PUBLISHED_LETTER_READER)
     private readonly letterReader: PublishedLetterReader,
@@ -28,6 +32,8 @@ export class GetPublicLetterUseCase {
     private readonly mediaAssetReader: MediaAssetReader,
     @Inject(OBJECT_STORAGE)
     private readonly objectStorage: ObjectStorage,
+    @Inject(PUBLISHED_LETTER_ANALYTICS)
+    private readonly analyticsWriter: PublishedLetterAnalyticsWriter,
   ) {}
 
   async execute(shareToken: string): Promise<PublishedLetter | undefined> {
@@ -63,6 +69,17 @@ export class GetPublicLetterUseCase {
       }),
     )
 
-    return createPublicLetterView(letter, assets, downloadUrls)
+    const publicLetter = createPublicLetterView(letter, assets, downloadUrls)
+
+    try {
+      await this.analyticsWriter.recordView(letter.id)
+    } catch (error: unknown) {
+      this.logger.warn(
+        `Could not record View analytics for Letter ${letter.id}`,
+        error instanceof Error ? error.stack : undefined,
+      )
+    }
+
+    return publicLetter
   }
 }

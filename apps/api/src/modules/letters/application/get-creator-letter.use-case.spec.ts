@@ -30,6 +30,8 @@ async function getPublishedLetter(): Promise<LetterPublishedRecord> {
       favoriteMemory: 'The new pending memory.',
     },
     shareToken: 'stable-share-token',
+    viewCount: 0,
+    lastViewedAt: null,
     createdAt: new Date('2026-09-06T00:00:00.000Z'),
     updatedAt: new Date('2026-09-06T00:01:00.000Z'),
   }

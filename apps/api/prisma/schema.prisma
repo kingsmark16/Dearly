@@ -105,6 +105,8 @@ model Letter {
   content            Json
   publishedContent   Json?
   shareToken         String?              @unique @db.VarChar(128)
+  viewCount          Int                  @default(0)
+  lastViewedAt       DateTime?
   archivedFromStatus LetterRestoreStatus?
   trashedFromStatus  LetterRestoreStatus?
   archivedAt         DateTime?

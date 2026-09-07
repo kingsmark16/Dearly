@@ -15,10 +15,14 @@ export const LETTER_REPOSITORY = Symbol('LETTER_REPOSITORY')
 export const CREATOR_LETTER_READER = Symbol('CREATOR_LETTER_READER')
 export const LETTER_EDITOR_REPOSITORY = Symbol('LETTER_EDITOR_REPOSITORY')
 export const LETTER_LIFECYCLE_REPOSITORY = Symbol('LETTER_LIFECYCLE_REPOSITORY')
+export const LETTER_SHARE_LINK_REPOSITORY = Symbol(
+  'LETTER_SHARE_LINK_REPOSITORY',
+)
 export const LETTER_PUBLISHING_REPOSITORY = Symbol(
   'LETTER_PUBLISHING_REPOSITORY',
 )
 export const PUBLISHED_LETTER_READER = Symbol('PUBLISHED_LETTER_READER')
+export const PUBLISHED_LETTER_ANALYTICS = Symbol('PUBLISHED_LETTER_ANALYTICS')
 
 export interface LetterDraftReader {
   findDraftById(
@@ -78,8 +82,20 @@ export interface LetterPublishingRepository
   }): Promise<LetterPublishedRecord | undefined>
 }
 
+export interface LetterShareLinkRepository {
+  regenerateShareToken(input: {
+    creatorId: string
+    letterId: string
+    shareToken: string
+  }): Promise<LetterPublishedRecord | undefined>
+}
+
 export interface PublishedLetterReader {
   findPublishedByShareToken(
     shareToken: string,
   ): Promise<LetterPublishedRecord | undefined>
+}
+
+export interface PublishedLetterAnalyticsWriter {
+  recordView(letterId: string): Promise<void>
 }

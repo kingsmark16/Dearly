@@ -509,8 +509,10 @@ function DraftEditorForm({
         beforePublish={saveDraftIfNeeded}
         hasPendingRevision={draft.hasPendingRevision}
         letterId={letterId}
+        lastViewedAt={draft.lastViewedAt}
         shareUrl={draft.shareUrl}
         status={draft.status}
+        viewCount={draft.viewCount}
       />
     </div>
   )

@@ -19,6 +19,7 @@ import { CreateLetterDraftUseCase } from '../application/create-letter-draft.use
 import { GetCreatorLetterUseCase } from '../application/get-creator-letter.use-case.js'
 import { ListCreatorLettersUseCase } from '../application/list-creator-letters.use-case.js'
 import { PublishLetterUseCase } from '../application/publish-letter.use-case.js'
+import { RegenerateLetterShareLinkUseCase } from '../application/regenerate-letter-share-link.use-case.js'
 import { UpdateLetterUseCase } from '../application/update-letter.use-case.js'
 import {
   LetterDraftNotFoundError,
@@ -53,6 +54,8 @@ export class LettersController {
     private readonly listCreatorLettersUseCase: ListCreatorLettersUseCase,
     @Inject(PublishLetterUseCase)
     private readonly publishLetterUseCase: PublishLetterUseCase,
+    @Inject(RegenerateLetterShareLinkUseCase)
+    private readonly regenerateLetterShareLinkUseCase: RegenerateLetterShareLinkUseCase,
     @Inject(UpdateLetterUseCase)
     private readonly updateLetterUseCase: UpdateLetterUseCase,
     @Inject(ChangeLetterLifecycleUseCase)
@@ -165,6 +168,27 @@ export class LettersController {
     @Param('id') letterId: string,
   ) {
     return this.changeLifecycle(session, letterId, 'archive')
+  }
+
+  @Post(':id/regenerate-link')
+  async regenerateShareLink(
+    @Session() session: UserSession,
+    @Param('id') letterId: string,
+  ) {
+    try {
+      const result = await this.regenerateLetterShareLinkUseCase.execute({
+        creatorId: session.user.id,
+        letterId,
+      })
+
+      return {
+        id: result.letter.id,
+        status: result.letter.status,
+        shareUrl: result.shareUrl,
+      }
+    } catch (error: unknown) {
+      this.throwLetterError(error)
+    }
   }
 
   @Post(':id/restore')

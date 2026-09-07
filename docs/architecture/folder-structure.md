@@ -86,7 +86,9 @@ apps/api/src/
         get-creator-letter.use-case.ts
         list-creator-letters.use-case.ts
         publish-letter.use-case.ts
+        regenerate-letter-share-link.use-case.ts
         share-url.ts
+        share-token.ts
         update-letter.use-case.ts
         ports/
           letter-repository.ts
@@ -98,8 +100,8 @@ apps/api/src/
           permanently-delete-letter.dto.ts
           update-letter-draft.dto.ts
       infrastructure/
-        letter-retention.scheduler.ts
-        prisma-letter.repository.ts
+          letter-retention.scheduler.ts
+          prisma-letter.repository.ts
       public/
         public-letters.controller.ts
         public-letters.service.ts
@@ -147,6 +149,13 @@ last version exposed through the Share link. Autosave updates only `content`;
 the publish use case copies it into `publishedContent` without changing the
 Letter's owner, Template snapshot, or Share token. The public reader only
 consumes the published snapshot.
+
+Share-link regeneration is an authenticated application use case backed by the
+Letter repository. It replaces the stored Share token atomically, so the old
+link stops resolving while the replacement link and QR code use the same active
+Published Letter. Public openings record only aggregate `viewCount` and
+`lastViewedAt` fields on the Letter; Creator previews use a separate read path
+and never enter the analytics seam.
 
 The editor, publish, archive, trash, and retention-cleanup behaviors use these
 existing seams. Media is nested under `letters` because a Media asset belongs
@@ -331,6 +340,7 @@ apps/web/src/
     letters/
       api/
         change-creator-letter-lifecycle.ts
+        regenerate-creator-letter-share-link.ts
         complete-creator-letter-media-upload.ts
         create-letter-draft.ts
         create-media-upload-intent.ts
@@ -358,6 +368,7 @@ apps/web/src/
         use-change-creator-letter-lifecycle.ts
         use-create-letter-draft.ts
         use-delete-creator-letter-media.ts
+        use-regenerate-creator-letter-share-link.ts
         use-reorder-creator-letter-media.ts
         use-update-creator-letter-draft.ts
         use-upload-creator-letter-media.ts
