@@ -117,10 +117,23 @@ model Letter {
   updatedAt          DateTime             @updatedAt
   creator            User                 @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   mediaAssets        MediaAsset[]
+  reports            LetterReport[]
 
   @@index([creatorId, status, updatedAt])
   @@index([status, trashedAt])
   @@map("letter")
+}
+
+model LetterReport {
+  id        String   @id @default(cuid())
+  letterId  String
+  reason    String   @db.VarChar(64)
+  details   String?  @db.VarChar(1000)
+  createdAt DateTime @default(now())
+  letter    Letter   @relation(fields: [letterId], references: [id], onDelete: Cascade)
+
+  @@index([letterId, createdAt])
+  @@map("letter_report")
 }
 
 model MediaAsset {

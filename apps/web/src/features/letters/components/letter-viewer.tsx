@@ -4,6 +4,7 @@ import type { PublishedLetter } from '@dearly/contracts'
 import Image from 'next/image'
 import { Button } from '@dearly/ui/button'
 import { useState } from 'react'
+import { LetterReportForm } from './letter-report-form'
 
 const animationMarks = {
   hearts: '<3',
@@ -145,7 +146,13 @@ function StoryElement({
   }
 }
 
-export function LetterViewer({ letter }: { letter: PublishedLetter }) {
+export function LetterViewer({
+  letter,
+  reportSlug,
+}: {
+  letter: PublishedLetter
+  reportSlug?: string | null
+}) {
   const [isOpen, setIsOpen] = useState(false)
   const [revealedElementIds, setRevealedElementIds] = useState<Set<string>>(
     () => new Set(),
@@ -227,6 +234,8 @@ export function LetterViewer({ letter }: { letter: PublishedLetter }) {
         <footer className="border-t border-[var(--dearly-blush)] pt-8 text-center text-sm text-[var(--dearly-muted)]">
           Made with care on Dearly.
         </footer>
+
+        {reportSlug ? <LetterReportForm shareToken={reportSlug} /> : null}
       </article>
     </main>
   )

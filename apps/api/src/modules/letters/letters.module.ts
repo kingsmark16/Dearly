@@ -14,6 +14,7 @@ import {
   LETTER_EDITOR_REPOSITORY,
   LETTER_LIFECYCLE_REPOSITORY,
   LETTER_PUBLISHING_REPOSITORY,
+  LETTER_REPORT_REPOSITORY,
   LETTER_REPOSITORY,
   LETTER_SHARE_LINK_REPOSITORY,
   PUBLISHED_LETTER_ANALYTICS,
@@ -21,10 +22,12 @@ import {
 } from './application/ports/letter-repository.js'
 import { UpdateLetterUseCase } from './application/update-letter.use-case.js'
 import { PrismaLetterRepository } from './infrastructure/prisma-letter.repository.js'
+import { PrismaLetterReportRepository } from './infrastructure/prisma-letter-report.repository.js'
 import { LettersController } from './presentation/letters.controller.js'
 import { PublicLettersController } from './public/public-letters.controller.js'
 import { PublicLettersService } from './public/public-letters.service.js'
 import { GetPublicLetterUseCase } from './public/get-public-letter.use-case.js'
+import { ReportLetterUseCase } from './public/report-letter.use-case.js'
 import { LetterRetentionScheduler } from './infrastructure/letter-retention.scheduler.js'
 import { CompleteMediaUploadUseCase } from './media/application/complete-media-upload.use-case.js'
 import { CreateMediaUploadIntentUseCase } from './media/application/create-media-upload-intent.use-case.js'
@@ -53,6 +56,10 @@ import { LocalMediaStorageController } from './media/presentation/local-media-st
   providers: [
     PublicLettersService,
     PrismaLetterRepository,
+    {
+      provide: LETTER_REPORT_REPOSITORY,
+      useClass: PrismaLetterReportRepository,
+    },
     {
       provide: LETTER_REPOSITORY,
       useExisting: PrismaLetterRepository,
@@ -127,6 +134,7 @@ import { LocalMediaStorageController } from './media/presentation/local-media-st
     GetCreatorLetterMediaUseCase,
     ReorderMediaGalleryUseCase,
     GetPublicLetterUseCase,
+    ReportLetterUseCase,
   ],
 })
 export class LettersModule {}

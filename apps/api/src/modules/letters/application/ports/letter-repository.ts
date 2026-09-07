@@ -1,3 +1,4 @@
+import type { LetterReportReason } from '@dearly/contracts/letters/letter-report'
 import type {
   CreateLetterDraftRecord,
   CreatorLetterLifecycleRecord,
@@ -23,6 +24,7 @@ export const LETTER_PUBLISHING_REPOSITORY = Symbol(
 )
 export const PUBLISHED_LETTER_READER = Symbol('PUBLISHED_LETTER_READER')
 export const PUBLISHED_LETTER_ANALYTICS = Symbol('PUBLISHED_LETTER_ANALYTICS')
+export const LETTER_REPORT_REPOSITORY = Symbol('LETTER_REPORT_REPOSITORY')
 
 export interface LetterDraftReader {
   findDraftById(
@@ -98,4 +100,12 @@ export interface PublishedLetterReader {
 
 export interface PublishedLetterAnalyticsWriter {
   recordView(letterId: string): Promise<void>
+}
+
+export interface LetterReportRepository {
+  createForPublishedShareToken(input: {
+    shareToken: string
+    reason: LetterReportReason
+    details?: string
+  }): Promise<boolean>
 }

@@ -26,5 +26,10 @@ export default async function LetterPage({ params }: LetterPageProps) {
     throw error
   })
 
-  return <LetterViewer letter={letter} />
+  return (
+    <LetterViewer
+      letter={letter}
+      reportSlug={letter.slug === 'our-story' ? null : slug}
+    />
+  )
 }

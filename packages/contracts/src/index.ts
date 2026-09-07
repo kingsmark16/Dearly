@@ -36,6 +36,15 @@ export {
   type LetterLifecycleResponse,
 } from './letters/creator-letter'
 export {
+  CreateLetterReportInputSchema,
+  LetterReportReasonSchema,
+  LetterReportResponseSchema,
+  LETTER_REPORT_REASONS,
+  type CreateLetterReportInput,
+  type LetterReportReason,
+  type LetterReportResponse,
+} from './letters/letter-report'
+export {
   CreateMediaUploadIntentInputSchema,
   CreatorMediaAssetListSchema,
   CreatorMediaAssetSchema,
