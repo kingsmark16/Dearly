@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@dearly/ui/button'
 import { authClient } from '../auth-client'
+import { GoogleSignInButton } from './google-sign-in-button'
 
 export function SignInForm() {
   const router = useRouter()
@@ -82,6 +83,7 @@ export function SignInForm() {
         </Link>
         .
       </p>
+      <GoogleSignInButton />
     </form>
   )
 }

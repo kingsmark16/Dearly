@@ -113,6 +113,7 @@ jobs:
           DEARLY_API_URL: http://127.0.0.1:4000/api/v1
           NEXT_PUBLIC_API_URL: http://127.0.0.1:4000/api/v1
           NEXT_PUBLIC_AUTH_URL: http://127.0.0.1:4000
+          NEXT_PUBLIC_GOOGLE_SIGN_IN_ENABLED: true
 
       - name: Install Playwright Chromium
         run: pnpm exec playwright install --with-deps chromium
