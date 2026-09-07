@@ -1,29 +1,29 @@
 export {
   CreatorProfileSchema,
   type CreatorProfile,
-} from './auth/creator-profile'
+} from './auth/creator-profile.js'
 export {
   CreatorAccountDeletionResponseSchema,
   type CreatorAccountDeletionResponse,
-} from './auth/creator-account-deletion'
+} from './auth/creator-account-deletion.js'
 export {
   PublishedLetterSchema,
   PublishedLetterElementSchema,
   type PublishedLetterElement,
   type PublishedLetter,
-} from './letters/published-letter'
+} from './letters/published-letter.js'
 export {
   PublishLetterResponseSchema,
   type PublishLetterResponse,
-} from './letters/publish-letter'
+} from './letters/publish-letter.js'
 export {
   CreateDraftInputSchema,
   type CreateDraftInput,
-} from './letters/create-draft'
+} from './letters/create-draft.js'
 export {
   UpdateDraftInputSchema,
   type UpdateDraftInput,
-} from './letters/update-draft'
+} from './letters/update-draft.js'
 export {
   CreatorLetterDraftSchema,
   CreatorLetterSchema,
@@ -34,7 +34,7 @@ export {
   type CreatorLetterDraft,
   type CreatorLetterSummary,
   type LetterLifecycleResponse,
-} from './letters/creator-letter'
+} from './letters/creator-letter.js'
 export {
   CreateLetterReportInputSchema,
   LetterReportReasonSchema,
@@ -43,7 +43,7 @@ export {
   type CreateLetterReportInput,
   type LetterReportReason,
   type LetterReportResponse,
-} from './letters/letter-report'
+} from './letters/letter-report.js'
 export {
   CreateMediaUploadIntentInputSchema,
   CreatorMediaAssetListSchema,
@@ -56,7 +56,7 @@ export {
   type CreateMediaUploadIntentInput,
   type MediaUploadIntent,
   type ReorderMediaGalleryInput,
-} from './letters/media'
+} from './letters/media.js'
 export {
   CategoryListSchema,
   CategorySchema,
@@ -64,14 +64,14 @@ export {
   CategorySlugSchema,
   type Category,
   type CategorySeed,
-} from './catalog/category'
+} from './catalog/category.js'
 export {
   TemplateDefinitionSchema,
   TemplateLimitsSchema,
   TemplateOpeningScreenSchema,
   type TemplateDefinition,
   type TemplateOpeningScreen,
-} from './catalog/template-definition'
+} from './catalog/template-definition.js'
 export {
   AnimationTemplateElementSchema,
   AnimationTokenSchema,
@@ -83,12 +83,12 @@ export {
   TextTemplateElementSchema,
   type TemplateElement,
   type TemplateTextContent,
-} from './catalog/template-element'
+} from './catalog/template-element.js'
 export {
   TemplateListSchema,
   TemplatePreviewSchema,
   TemplateSummarySchema,
   type TemplatePreview,
   type TemplateSummary,
-} from './catalog/template'
-export { TemplateSchema, type Template } from './catalog/template-response'
+} from './catalog/template.js'
+export { TemplateSchema, type Template } from './catalog/template-response.js'

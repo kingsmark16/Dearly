@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { TemplateDefinitionSchema } from './template-definition'
-import { TemplateSummarySchema } from './template'
+import { TemplateDefinitionSchema } from './template-definition.js'
+import { TemplateSummarySchema } from './template.js'
 
 export const TemplateSchema = TemplateSummarySchema.extend({
   definition: TemplateDefinitionSchema,

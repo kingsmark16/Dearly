@@ -29,6 +29,9 @@ export const environmentValidationSchema = Joi.object({
   SMTP_USER: Joi.string().allow('').default(''),
   SMTP_PASSWORD: Joi.string().allow('').default(''),
   SMTP_FROM: Joi.string().email().default('noreply@dearly.dev'),
+  REDIS_URL: Joi.string()
+    .uri({ scheme: ['redis', 'rediss'] })
+    .default('redis://127.0.0.1:6379'),
   AUTH_RATE_LIMIT_ENABLED: Joi.boolean()
     .truthy('true')
     .falsy('false')
@@ -72,6 +75,7 @@ export function validateEnvironment(
       'SMTP_HOST',
       'SMTP_PORT',
       'SMTP_FROM',
+      'REDIS_URL',
     ]
     const missingKeys = requiredKeys.filter((key) => !environment[key])
 
@@ -89,6 +93,14 @@ export function validateEnvironment(
 
     if (['127.0.0.1', 'localhost'].includes(value.SMTP_HOST)) {
       throw new Error('SMTP_HOST must point to a production email service')
+    }
+
+    if (
+      ['127.0.0.1', 'localhost', '::1'].includes(
+        new URL(value.REDIS_URL).hostname,
+      )
+    ) {
+      throw new Error('REDIS_URL must point to a production Redis service')
     }
 
     if (value.MEDIA_STORAGE_DRIVER !== 'r2') {

@@ -16,6 +16,7 @@ import { TestMailModule } from './modules/test-mail/test-mail.module.js'
 import { TestAuthModule } from './modules/test-auth/test-auth.module.js'
 import { HealthController } from './platform/health/health.controller.js'
 import { PrismaService } from './infrastructure/database/prisma.service.js'
+import { RedisModule } from './infrastructure/redis/redis.module.js'
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { PrismaService } from './infrastructure/database/prisma.service.js'
       validate: validateEnvironment,
     }),
     DatabaseModule,
+    RedisModule,
     EmailModule,
     CreatorModule,
     CatalogModule,

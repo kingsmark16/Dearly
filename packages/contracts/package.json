@@ -4,24 +4,72 @@
   "version": "0.1.0",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./auth/creator-profile": "./src/auth/creator-profile.ts",
-    "./auth/creator-account-deletion": "./src/auth/creator-account-deletion.ts",
-    "./letters/published-letter": "./src/letters/published-letter.ts",
-    "./letters/publish-letter": "./src/letters/publish-letter.ts",
-    "./catalog/category": "./src/catalog/category.ts",
-    "./catalog/template": "./src/catalog/template.ts",
-    "./catalog/template-definition": "./src/catalog/template-definition.ts",
-    "./catalog/template-element": "./src/catalog/template-element.ts",
-    "./catalog/template-response": "./src/catalog/template-response.ts",
-    "./letters/create-draft": "./src/letters/create-draft.ts",
-    "./letters/update-draft": "./src/letters/update-draft.ts",
-    "./letters/creator-letter": "./src/letters/creator-letter.ts",
-    "./letters/letter-report": "./src/letters/letter-report.ts",
-    "./letters/media": "./src/letters/media.ts"
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./dist/index.js"
+    },
+    "./auth/creator-profile": {
+      "types": "./src/auth/creator-profile.ts",
+      "import": "./dist/auth/creator-profile.js"
+    },
+    "./auth/creator-account-deletion": {
+      "types": "./src/auth/creator-account-deletion.ts",
+      "import": "./dist/auth/creator-account-deletion.js"
+    },
+    "./letters/published-letter": {
+      "types": "./src/letters/published-letter.ts",
+      "import": "./dist/letters/published-letter.js"
+    },
+    "./letters/publish-letter": {
+      "types": "./src/letters/publish-letter.ts",
+      "import": "./dist/letters/publish-letter.js"
+    },
+    "./catalog/category": {
+      "types": "./src/catalog/category.ts",
+      "import": "./dist/catalog/category.js"
+    },
+    "./catalog/template": {
+      "types": "./src/catalog/template.ts",
+      "import": "./dist/catalog/template.js"
+    },
+    "./catalog/template-definition": {
+      "types": "./src/catalog/template-definition.ts",
+      "import": "./dist/catalog/template-definition.js"
+    },
+    "./catalog/template-element": {
+      "types": "./src/catalog/template-element.ts",
+      "import": "./dist/catalog/template-element.js"
+    },
+    "./catalog/template-response": {
+      "types": "./src/catalog/template-response.ts",
+      "import": "./dist/catalog/template-response.js"
+    },
+    "./letters/create-draft": {
+      "types": "./src/letters/create-draft.ts",
+      "import": "./dist/letters/create-draft.js"
+    },
+    "./letters/update-draft": {
+      "types": "./src/letters/update-draft.ts",
+      "import": "./dist/letters/update-draft.js"
+    },
+    "./letters/creator-letter": {
+      "types": "./src/letters/creator-letter.ts",
+      "import": "./dist/letters/creator-letter.js"
+    },
+    "./letters/letter-report": {
+      "types": "./src/letters/letter-report.ts",
+      "import": "./dist/letters/letter-report.js"
+    },
+    "./letters/media": {
+      "types": "./src/letters/media.ts",
+      "import": "./dist/letters/media.js"
+    }
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "tsc --noEmit",
+    "build": "tsc -p tsconfig.build.json",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests"

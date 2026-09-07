@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { TemplateSchema } from '../catalog/template-response'
-import { TemplateSummarySchema } from '../catalog/template'
+import { TemplateSchema } from '../catalog/template-response.js'
+import { TemplateSummarySchema } from '../catalog/template.js'
 
 const isoDateTimeSchema = z.string().datetime()
 const creatorLetterStatusSchema = z.enum(['draft', 'published'])
