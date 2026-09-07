@@ -54,4 +54,21 @@ test('anonymous Viewer can browse categories and templates', async ({
   await expect(
     birthdayCategory.locator('[data-template-preview="another-year-brighter"]'),
   ).toContainText('Open your letter')
+
+  const anniversaryCategory = page.locator(
+    'section[aria-labelledby="anniversary-letter-heading"]',
+  )
+  await expect(anniversaryCategory).toContainText('2 templates')
+  await expect(
+    anniversaryCategory.locator('[data-template-preview="years-together"]'),
+  ).toContainText('Years together')
+  await expect(
+    anniversaryCategory.locator('[data-template-preview="years-together"]'),
+  ).toContainText('Open our story')
+  await expect(
+    anniversaryCategory.locator('[data-template-preview="still-choosing-you"]'),
+  ).toContainText('Still choosing you')
+  await expect(
+    anniversaryCategory.locator('[data-template-preview="still-choosing-you"]'),
+  ).toContainText('Open your letter')
 })
